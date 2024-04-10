@@ -1,11 +1,8 @@
-# Project Title
-
-[![Build Status](link-to-build-status-badge)](link-to-build)
-[![License](link-to-license-badge)](link-to-license)
+# Nebula
 
 ## Description
 
-Brief description of your project goes here.
+Nebula is a from scratch PID Controller for Purdue PROS for Vex V5. 
 
 ## Table of Contents
 
@@ -17,30 +14,18 @@ Brief description of your project goes here.
 
 ## Installation
 
-Provide step-by-step instructions on how to install and set up your project. Include any dependencies or prerequisites needed.
+1. Clone this repo.
+2. Open the folder this project is in.
 
 ## Usage
 
-Explain how to use your project with examples if possible. This section should help users understand how to interact with your code.
+TBD
 
 ## Features
 
-- Feature 1: Description
-- Feature 2: Description
+- Feature 1: Accurate PID
 - ...
 
 ## Contributing
 
-If you want others to contribute to your project, provide guidelines on how to do so. Include information on how to report bugs, submit feature requests, and contribute code.
-
-## License
-
-Specify the license under which your project is distributed. This helps users understand how they can use and distribute your code.
-
-## Acknowledgements
-
-Acknowledge any libraries, tools, or resources created by others that your project uses.
-
-## Contact
-
-Provide contact information or links to your social media profiles so users can reach out to you with questions or feedback.
+If you want to contribute DM me on Discord, "whoisunknownuser", describing your contribution.
