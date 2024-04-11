@@ -1,5 +1,5 @@
 #include "PID.hpp"
-#include "Nebula/chassisConfig.hpp"
+#include "Helix/chassisConfig.hpp"
 #include "main.h"
 
 //Settings
@@ -24,11 +24,18 @@ int turnPrevError = 0;
 int turnDerivative;
 int turnTotalError;
 
+bool resetDriveSensor =false;
+
 bool enableDrivePID = true;
 
 void FPID() {
 
     while(enableDrivePID) {
+
+
+        if (resetDriveSensor) {
+            resetDriveSensor = false;
+        }
         
         ////////////////////////////////////////////////////////
         //~~~~~~~~~~~~~Lateral Movement PID ~~~~~~~~~~~~~~~~~~//
@@ -48,7 +55,7 @@ void FPID() {
         double lateralMotorPower = turnerror *  kp + Derivative * kD + turntotalError + kI;
 
         ////////////////////////////////////////////////////////
-        //~~~~~~~~~~~~~Turning Movement PID ~~~~~~~~~~~~~~~~~~//
+        //~~~~~~~~~~~ horizontal Movement PID ~~~~~~~~~~~~~~~~//
         ////////////////////////////////////////////////////////
 
         int turnDifference = LeftSidePosition - RightSidePosition;
