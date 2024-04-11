@@ -1,6 +1,6 @@
 #include "main.h"
 #include "PID.hpp"
-#include "Helix/chassisConfig.hpp"
+#include "Helix/api.hpp"
 
 pros::Motor leftBack(5);
 pros::Motor leftMiddle(5);

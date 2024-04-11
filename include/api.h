@@ -44,7 +44,6 @@
 #define PROS_VERSION_PATCH 3
 #define PROS_VERSION_STRING "3.8.3"
 
-#include "Nebula/chassisConfig.hpp"
 #include "pros/adi.h"
 #include "pros/colors.h"
 #include "pros/distance.h"

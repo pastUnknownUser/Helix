@@ -6,13 +6,12 @@
 #include "main.cpp"
 #include "PID.cpp"
 
-
 namespace Helix {
     ////////////////////////////////////////////////////////////////////////
     // Contains all the important structures for drive and other settings //
     ////////////////////////////////////////////////////////////////////////
 
-struct Drivetrain (
+struct Drivetrain {
     /**
      * @param leftMotors pointer to the left motors
      * @param rightMotors pointer to the right motors
@@ -29,7 +28,7 @@ struct Drivetrain (
      float wheelDiameter;
      float rpm;
      float chasePower;
-);
+};
 
 struct Sensors {
     /**
@@ -40,4 +39,4 @@ struct Sensors {
     pros::Imu* imu;
 };
 
-}*
+}

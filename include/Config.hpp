@@ -1,3 +1,5 @@
+#pragma once
+
 #include "api.h"
 
 pros::Motor Intake(10);
