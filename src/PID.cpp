@@ -1,6 +1,7 @@
 #include "PID.hpp"
 //#include "main.h"
 #include "api.h"
+#include "Helix/api.hpp"
 #include "pros/rtos.h"
 
 //Settings
@@ -39,13 +40,13 @@ void FPID() {
         }
         
         ////////////////////////////////////////////////////////
-        //~~~~~~~~~~~~~Lateral Movement PID ~~~~~~~~~~~~~~~~~~//
+        //~~~~~~~~~~~~~ Lateral Movement PID ~~~~~~~~~~~~~~~~~//
         ////////////////////////////////////////////////////////
 
-        int LeftSidePosition = (0);  //Left Side Drive
-        int RightSidePosition =(0);  //Right Side Drive
+        int LeftMotors = (0);  //Left Side Drive
+        int RightMotors =(0);  //Right Side Drive
 
-        int AveragePosition = (LeftSidePosition + RightSidePosition)/2;  //Average of both sides
+        int AveragePosition = (LeftMotors + RightMotors)/2;  //Average of both sides
 
         error = AveragePosition - desiredValue;  //Potential 
 
@@ -56,10 +57,10 @@ void FPID() {
         double lateralMotorPower = error *  kP + derivative * kD + totalError + kI;
 
         ////////////////////////////////////////////////////////
-        //~~~~~~~~~~~ horizontal Movement PID ~~~~~~~~~~~~~~~~//
+        //~~~~~~~~~~~ Horizontal Movement PID ~~~~~~~~~~~~~~~~//
         ////////////////////////////////////////////////////////
 
-        int turnDifference = LeftSidePosition - RightSidePosition;
+        int turnDifference = LeftMotors - RightMotors;
 
         turnError = turnDifference - desiredTurnValue;  //Potential 
 
@@ -68,7 +69,6 @@ void FPID() {
         turnTotalError +- turnError;
 
         double HorizontalMotorPower = turnError *  turnkP + turnDerivative * turnkD + turnTotalError + turnkI;
-
 
         prevError = error;
         turnPrevError = turnError;

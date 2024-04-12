@@ -19,7 +19,7 @@ struct Drivetrain {
      * @param chasePower higher values make the robot move faster but causes more overshoot on turns
      */
      Drivetrain(pros::MotorGroup* leftMotors, pros::MotorGroup* rightMotors, float trackWidth, float wheelDiameter,
-               float rpm, float chasePower);
+     float rpm, float chasePower);
      pros::Motor_Group* leftMotors;
      pros::Motor_Group* rightMotors;
      float trackWidth;
@@ -30,11 +30,23 @@ struct Drivetrain {
 
 struct Sensors {
     /**
-    *Allows easier access to imputing the IMU sensor
+     * Allows easier access to imputing the IMU sensor
      * @param imu pointer to the IMU
      */
     Sensors(pros::Imu* imu);
     pros::Imu* imu;
 };
+
+class Chassis {
+    public:
+        /**
+         * @brief Construct a new chassis
+         *
+         * @param drivetrain Drivetrain to be used for the chassis
+         * @param sensors Sensors to be used for the PID
+         */
+        Chassis(Drivetrain drivetrain, Sensors sensors);
+
+}; 
 
 }

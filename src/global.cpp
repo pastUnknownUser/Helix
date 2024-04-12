@@ -25,3 +25,5 @@ Helix::Drivetrain drivetrain {
 Helix::Sensors sensor {
     &Inertial
 };
+
+Helix::Chassis chassis(drivetrain, sensor);
