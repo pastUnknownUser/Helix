@@ -71,13 +71,10 @@ void FPID() {
 
         double HorizontalMotorPower = turnError *  turnkP + turnDerivative * turnkD + turnTotalError + turnkI;
 
-<<<<<<< HEAD
-=======
         LeftSideDrive.move_voltage((lateralMotorPower + HorizontalMotorPower)* 1000);
         RightSideDrive.move_voltage((lateralMotorPower - HorizontalMotorPower)* 1000);
 
 
->>>>>>> ec1eb8728e685f429190713742aeed579b300fb6
         prevError = error;
         turnPrevError = turnError;
         pros::delay(20);
