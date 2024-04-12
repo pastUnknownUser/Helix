@@ -3,12 +3,24 @@
 #include <functional>
 #include <cmath>
 #include "api.h"
+#include "pros/rtos.hpp"
+#include "pros/motors.hpp"
+#include "pros/imu.hpp"
 
-namespace Helix {
     ////////////////////////////////////////////////////////////////////////
     // Contains all the important structures for drive and other settings //
     ////////////////////////////////////////////////////////////////////////
 
+namespace Helix {
+    struct Test {
+        pros::Motor_Group* leftMotors;
+        pros::Motor_Group* rightMotors;
+        float trackWidth;
+        float wheelDiameter;
+        float rpm;
+        float chasePower;
+    };
+    
 struct Drivetrain {
     /**
      * @param leftMotors pointer to the left motors
@@ -46,6 +58,12 @@ class Chassis {
          * @param sensors Sensors to be used for the PID
          */
         Chassis(Drivetrain drivetrain, Sensors sensors);
+
+        private:
+        pros::Mutex mutex;
+
+        Drivetrain drivetrain;
+        Sensors sensors;
 
 }; 
 

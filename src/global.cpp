@@ -1,6 +1,7 @@
 #include "main.h"
 #include "PID.hpp"
 #include "Helix/api.hpp"
+#include "Helix/chassisConfig.hpp"
 
 pros::Motor leftBack(5);
 pros::Motor leftMiddle(5);
@@ -13,23 +14,29 @@ pros::Motor_Group RightSideDrive({rightBack, rightMiddle, rightFront});
 
 pros::IMU Inertial(19); // port 19
 
-
-
+int main()
+{
+    Helix::Test me;
+    me.leftMotors = &LeftSideDrive;
+    me.rightMotors = &RightSideDrive;
+    me.trackWidth = 10;
+    me.wheelDiameter = 3.25;
+    me.rpm = 360;
+    me.chasePower = 3;
+}
+/*
 Helix::Drivetrain drivetrain {
     &LeftSideDrive, // left drivetrain motors
     &RightSideDrive, // right drivetrain motors
     10, // track width
     3.25, // wheel diameter
     360, // wheel rpm
-	0 //Chase Power
+	5 //Chase Power
 };
 
-Helix::Sensors sensor {
+Helix::Sensors sensors {
     &Inertial
 };
 
-<<<<<<< HEAD
-Helix::Chassis chassis(drivetrain, sensor);
-=======
-
->>>>>>> ec1eb8728e685f429190713742aeed579b300fb6
+Helix::Chassis chassis(drivetrain, sensors);
+*/
