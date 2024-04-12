@@ -24,4 +24,4 @@ Helix::Drivetrain drivetrain {
 
 Helix::Sensors sensor {
     &Inertial
-}
+};

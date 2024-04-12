@@ -1,6 +1,5 @@
 #include "PID.hpp"
-#include "main.h"
-#include "Helix/api.hpp"
+//#include "main.h"
 #include "api.h"
 #include "pros/rtos.h"
 
@@ -43,8 +42,8 @@ void FPID() {
         //~~~~~~~~~~~~~Lateral Movement PID ~~~~~~~~~~~~~~~~~~//
         ////////////////////////////////////////////////////////
 
-        int LeftSidePosition = ();  //Left Side Drive
-        int RightSidePosition =();  //Right Side Drive
+        int LeftSidePosition = (0);  //Left Side Drive
+        int RightSidePosition =(0);  //Right Side Drive
 
         int AveragePosition = (LeftSidePosition + RightSidePosition)/2;  //Average of both sides
 
