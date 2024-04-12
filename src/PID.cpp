@@ -3,6 +3,7 @@
 #include "api.h"
 #include "Helix/api.hpp"
 #include "pros/rtos.h"
+#include "Helix/api.hpp"
 
 //Settings
 double kP = 0.0;
@@ -70,9 +71,16 @@ void FPID() {
 
         double HorizontalMotorPower = turnError *  turnkP + turnDerivative * turnkD + turnTotalError + turnkI;
 
+<<<<<<< HEAD
+=======
+        LeftSideDrive.move_voltage((lateralMotorPower + HorizontalMotorPower)* 1000);
+        RightSideDrive.move_voltage((lateralMotorPower - HorizontalMotorPower)* 1000);
+
+
+>>>>>>> ec1eb8728e685f429190713742aeed579b300fb6
         prevError = error;
         turnPrevError = turnError;
-        pros::c::delay(20);
+        pros::delay(20);
     }
 
 }
