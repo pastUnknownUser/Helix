@@ -2,8 +2,10 @@
 //#include "main.h"
 #include "api.h"
 #include "Helix/api.hpp"
+#include "pros/motors.h"
 #include "pros/rtos.h"
 #include "Helix/api.hpp"
+#include <codecvt>
 
 //Settings
 double kP = 0.0;
@@ -31,7 +33,7 @@ bool resetDriveSensor =false;
 
 bool enableDrivePID = true;
 
-void FPID() {
+void HelixPID(void* param) {
 
     while(enableDrivePID) {
 
@@ -39,15 +41,17 @@ void FPID() {
         if (resetDriveSensor) {
             resetDriveSensor = false;
         }
-        
+
+        int LeftMotorEnc = (leftFront.get_position() + leftMiddle.get_position() + leftBack.get_position())/3;
+        int RightMotorEnc = (leftFront.get_position() + leftMiddle.get_position() + leftBack.get_position())/3;
+        //int leftMotorPosition = LeftSideDrive.get_positions(pros::E_MOTOR_ENCODER_DEGREES());
+        //int rightMotorPosition = LeftSideDrive.get_positions(pros::E_MOTOR_ENCODER_DEGREES());
+
         ////////////////////////////////////////////////////////
         //~~~~~~~~~~~~~ Lateral Movement PID ~~~~~~~~~~~~~~~~~//
         ////////////////////////////////////////////////////////
 
-        int LeftMotors = (0);  //Left Side Drive
-        int RightMotors =(0);  //Right Side Drive
-
-        int AveragePosition = (LeftMotors + RightMotors)/2;  //Average of both sides
+        int AveragePosition = (LeftMotorEnc + RightMotorEnc)/2;  //Average of both sides
 
         error = AveragePosition - desiredValue;  //Potential 
 
@@ -61,7 +65,7 @@ void FPID() {
         //~~~~~~~~~~~ Horizontal Movement PID ~~~~~~~~~~~~~~~~//
         ////////////////////////////////////////////////////////
 
-        int turnDifference = LeftMotors - RightMotors;
+        int turnDifference = LeftMotorEnc - RightMotorEnc;
 
         turnError = turnDifference - desiredTurnValue;  //Potential 
 

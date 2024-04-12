@@ -3,12 +3,12 @@
 #include "Helix/api.hpp"
 #include "Helix/chassisConfig.hpp"
 
-pros::Motor leftBack(5);
-pros::Motor leftMiddle(5);
-pros::Motor leftFront(5);
-pros::Motor rightBack(10,false);
-pros::Motor rightMiddle(5,false);
-pros::Motor rightFront(5,false);
+pros::Motor leftBack(1);
+pros::Motor leftMiddle(3);
+pros::Motor leftFront(11);
+pros::Motor rightBack(8,false);
+pros::Motor rightMiddle(10,false);
+pros::Motor rightFront(17,false);
 pros::Motor_Group LeftSideDrive({leftBack, leftMiddle, leftFront});
 pros::Motor_Group RightSideDrive({rightBack, rightMiddle, rightFront});
 
