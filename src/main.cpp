@@ -62,11 +62,14 @@ void competition_initialize() {}
  * from where it left off.
  */
 
-void HelixPID(void* param);
-
 void autonomous() {
-	pros::Task helixPID_task(HelixPID);
-	int desiredValue = 10;
+	leftBack.set_zero_position(0);
+    leftMiddle.set_zero_position(0);
+    leftFront.set_zero_position(0);
+    rightBack.set_zero_position(0);
+    rightMiddle.set_zero_position(0);
+    rightFront.set_zero_position(0);
+	moveRobot(5,127);
 }
 
 /**
