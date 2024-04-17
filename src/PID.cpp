@@ -8,12 +8,12 @@
 #include <codecvt>
 
 //Settings
-double kP = 0.0;
+double kP = 2.0;
 double kI = 0.0;
-double kD = 0.0;
-double turnkP = 0.0;
-double turnkI = 0.0;
-double turnkD = 0.0;
+double kD = 10.0;
+double turnkP = 100.0;
+double turnkI = 100.0;
+double turnkD = 100.0;
 
 //Auto Settngs
 int desiredValue = 200;
@@ -76,7 +76,7 @@ void HelixPID(void* param) {
         double HorizontalMotorPower = turnError *  turnkP + turnDerivative * turnkD + turnTotalError + turnkI;
 
         LeftSideDrive.move_voltage((lateralMotorPower + HorizontalMotorPower)* 1000);
-        RightSideDrive.move_voltage((lateralMotorPower - HorizontalMotorPower)* 1000);
+        RightSideDrive.move_voltage((lateralMotorPower + HorizontalMotorPower)* 1000);
 
 
         prevError = error;
