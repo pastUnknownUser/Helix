@@ -9,8 +9,8 @@
 #include <cmath>
 
 //Settings
-double kP = 2.0;
-double kI = 0.0;
+double kP = 10.0;
+double kI = 0.0005;
 double kD = 10.0;
 double turnkP = 100.0;
 double turnkI = 100.0;
@@ -51,16 +51,29 @@ void moveRobot(double distance_in_inches, int speed) {
     // Set the flag to indicate that the robot is moving
     isMoving = true;
 
+    int leftAvg = (leftFront.get_position() + leftMiddle.get_position() + leftBack.get_position())/3;
+    int rightAvg = (rightFront.get_position() + rightMiddle.get_position() + rightBack.get_position())/3;
+
+    int AveragePosition = (left_target_position + right_target_position)/2;
+
+    error = AveragePosition - distance_in_inches;  //Potential 
+
+    derivative = error - prevError;  //Derivative
+
+    totalError += error * 0.02;
+
+    double lateralMotorPower = error *  kP + derivative * kD + totalError + kI;
+
     // Calculate target encoder counts
-    int target_encoder_counts = (int)(distance_in_inches * tooInches);
+    int target_encoder_counts = (int)(distance_in_inches * tooInches /* + lateralMotorPower*/);
 
     // Set target positions
-    left_target_position = leftFront.get_position() + target_encoder_counts;
-    right_target_position = rightFront.get_position() + target_encoder_counts;
+    left_target_position = leftAvg + target_encoder_counts;
+    right_target_position = rightAvg + target_encoder_counts;
 
     // Issue motor commands to move the robot
-    LeftSideDrive.move_relative(target_encoder_counts, speed);
-    RightSideDrive.move_relative(target_encoder_counts, speed);
+    LeftSideDrive.move_relative(target_encoder_counts + lateralMotorPower, speed);
+    RightSideDrive.move_relative(target_encoder_counts + lateralMotorPower, speed);
 
     // Wait until both motors have reached their target positions
     while (true) {
@@ -104,7 +117,7 @@ void moveRobot(double distance_in_inches, int speed) {
 
 
 
-void HelixPID(void* param) {
+/*void HelixPID(void* param) {
 
     while(enableDrivePID) {
 
@@ -159,4 +172,4 @@ void HelixPID(void* param) {
         pros::delay(20);
     }
 
-}
+}*/

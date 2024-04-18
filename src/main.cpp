@@ -63,13 +63,7 @@ void competition_initialize() {}
  */
 
 void autonomous() {
-	leftBack.set_zero_position(0);
-    leftMiddle.set_zero_position(0);
-    leftFront.set_zero_position(0);
-    rightBack.set_zero_position(0);
-    rightMiddle.set_zero_position(0);
-    rightFront.set_zero_position(0);
-	moveRobot(5,127);
+	moveRobot(10,127);
 }
 
 /**
