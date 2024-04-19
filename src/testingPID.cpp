@@ -22,16 +22,14 @@ void moveRobot(double distance);
 double integral = 0;
 double previous_error = 0;
 
-float chassisRPM = 360;
-
-void autonomous() {
-    moveRobot(5); // Example: Moves robot 5 inches
-}
+int chassisRPM = 360;
+double LeftPose = (leftBack.get_position() + leftMiddle.get_position() + leftFront.get_position()/3);
+double RightPose = (rightBack.get_position() + rightMiddle.get_position() + rightFront.get_position()/3);
 
 void moveRobot(double distance) {
     double target_rotations = distance / (3.25 * M_PI); // Convert inches to rotations
-    //double left_current_rotations = LeftSideDrive.get_positions() / chassisRPM;
-    float right_current_rotations = RightSideDrive.get_positions() / float chassisRPM;
+    double left_current_rotations = LeftPose / chassisRPM;
+    double right_current_rotations = RightPose / chassisRPM;
 
     double left_error = target_rotations - left_current_rotations;
     double right_error = target_rotations - right_current_rotations;
