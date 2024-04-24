@@ -11,5 +11,3 @@
 // pros::Motor rightFront(17,false);
 // pros::Motor_Group LeftSideDrive({leftBack, leftMiddle, leftFront});
 // pros::Motor_Group RightSideDrive({rightBack, rightMiddle, rightFront});
-
-pros::IMU Inertial(19); // port 19

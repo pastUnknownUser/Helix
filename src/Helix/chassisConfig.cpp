@@ -18,11 +18,16 @@ Helix::Drivetrain::Drivetrain(pros::MotorGroup* LeftSide, pros::MotorGroup* Righ
        WheelDiameter(WheelDiameter)
 {}
 
-Helix::Chassis::Chassis(Drivetrain drivetrain, PID LateralSettings, PID HorizontalSettings) :
+Helix::Sensors::Sensors(pros::IMU* Imu) :
+        Imu(Imu)
+{}
+
+Helix::Chassis::Chassis(Drivetrain drivetrain, PID LateralSettings, PID HorizontalSettings, Sensors sensors) :
 
         drivetrain(drivetrain),
         LateralSettings(LateralSettings),
-        HorizontalSettings(HorizontalSettings)
+        HorizontalSettings(HorizontalSettings),
+        sensors(sensors)
 {}
 
 void Helix::Chassis::drive(float dist, float speed, float timeout) {

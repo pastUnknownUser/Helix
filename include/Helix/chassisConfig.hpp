@@ -32,6 +32,17 @@ class Drivetrain {
        float WheelDiameter;
 };
 
+class Sensors {
+    public:
+        /**
+        *@brief The (currnt) IMU setup
+        *
+        @param Imu The Inertial Sensor
+        */
+            Sensors(pros::IMU* Imu);
+            pros::IMU* Imu;
+};
+
 class PID {
     /**
      * @brief Constructs the Lateral PID
@@ -60,14 +71,16 @@ class Chassis {
        * 
        * @param drivetrain Both left and right side combined
        * @param LateralSettings the PID for fwd and rev
-       * 
+       * @param HorizontalSettings
+       * @param sensors 
       */
 
-     Chassis(Drivetrain drivetrain, PID LateralSettings, PID HorizontalSettings);
+     Chassis(Drivetrain drivetrain, PID LateralSettings, PID HorizontalSettings, Sensors sensors);
 
      Drivetrain drivetrain;
      PID LateralSettings;
      PID HorizontalSettings;
+     Sensors sensors;
 
      /**
      * @brief Allows for a user to imput dist speed and timout to drive to a point
@@ -78,7 +91,7 @@ class Chassis {
      */
         void drive(float dist, float speed, float timeout);
 
-    /**
+     /**
      * @brief Allows for a user to imput dist speed and timout to drive to a point
      * 
      * @param dist the distance you want

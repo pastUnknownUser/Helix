@@ -12,6 +12,8 @@ pros::Motor rightFront(17,false);
 pros::Motor_Group LeftSideDrive({leftBack, leftMiddle, leftFront});
 pros::Motor_Group RightSideDrive({rightBack, rightMiddle, rightFront});
 
+pros::IMU Imu(19); // port 19
+
 /**
  * A callback function for LLEMU's center button.
  *
@@ -35,6 +37,10 @@ Helix::Drivetrain drivetrain(
 	&RightSideDrive,
 	360, //Drive RPM
 	3.25 // Wheel Diameter
+);
+
+Helix::Sensors sensors(
+	&Imu
 );
 
 Helix::PID LateralSettings {
