@@ -8,7 +8,6 @@
 #include <cmath>
 #include "main.h"
 
-
 // Constants for the PID controller
 const double kP = 0.1;
 const double kI = 0.01;
@@ -18,18 +17,20 @@ const double kD = 0.001;
 double calculatePID(double target, double current);
 void moveRobot(double distance);
 
+const double wheelDiameter = 3.25; // Diameter of the wheel in inches
+const double rpm = 360.0; // Encoder counts per revolution
+const double Inches = rpm / (wheelDiameter * 3.14159); // Calculate encoder counts per inch
+
 // Global variables for PID controller
 double integral = 0;
 double previous_error = 0;
 
 int chassisRPM = 360;
-double LeftPose = (leftBack.get_position() + leftMiddle.get_position() + leftFront.get_position()/3);
-double RightPose = (rightBack.get_position() + rightMiddle.get_position() + rightFront.get_position()/3);
 
-void moveRobot(double distance) {
-    double target_rotations = distance / (3.25 * M_PI); // Convert inches to rotations
-    double left_current_rotations = LeftPose / chassisRPM;
-    double right_current_rotations = RightPose / chassisRPM;
+void moveRobot(double distance, bool Reverse) {
+    double target_rotations = distance / Inches; // Convert inches to rotations
+    double left_current_rotations = leftFront.get_position() / chassisRPM;
+    double right_current_rotations = rightFront.get_position() / chassisRPM;
 
     double left_error = target_rotations - left_current_rotations;
     double right_error = target_rotations - right_current_rotations;

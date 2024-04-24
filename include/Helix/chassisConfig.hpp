@@ -6,65 +6,85 @@
 #include "pros/rtos.hpp"
 #include "pros/motors.hpp"
 #include "pros/imu.hpp"
+#include "pros/apix.h"
 
     ////////////////////////////////////////////////////////////////////////
     // Contains all the important structures for drive and other settings //
     ////////////////////////////////////////////////////////////////////////
-
-namespace Helix {
-    struct Test {
-        pros::Motor_Group* leftMotors;
-        pros::Motor_Group* rightMotors;
-        float trackWidth;
-        float wheelDiameter;
-        float rpm;
-        float chasePower;
-    };
     
-struct Drivetrain {
-    /**
-     * @param leftMotors pointer to the left motors
-     * @param rightMotors pointer to the right motors
-     * @param trackWidth the track width of the robot
-     * @param wheelDiameter the diameter of the wheel used on the drivetrain
-     * @param rpm the rpm of the wheels
-     * @param chasePower higher values make the robot move faster but causes more overshoot on turns
-     */
-     Drivetrain(pros::MotorGroup* leftMotors, pros::MotorGroup* rightMotors, float trackWidth, float wheelDiameter,
-     float rpm, float chasePower);
-     pros::Motor_Group* leftMotors;
-     pros::Motor_Group* rightMotors;
-     float trackWidth;
-     float wheelDiameter;
-     float rpm;
-     float chasePower;
+namespace Helix {
+
+class Drivetrain {
+    public:
+        /**
+         * @brief The drivetrain constructor
+         * 
+         * @param LeftSide The left part of the drivetrain
+         * @param RightSide The left part of the drivetrain
+         * @param Rpm The rpm of the drive
+         * @param WheelDiameter
+        */ 
+       Drivetrain(pros::MotorGroup* LeftSide, pros::MotorGroup* RightSide, float Rpm, float WheelDiameter);
+
+       pros::MotorGroup* Leftside;
+       pros::MotorGroup* RightSide;
+       float Rpm;
+       float WheelDiameter;
 };
 
-struct Sensors {
+class PID {
     /**
-     * Allows easier access to imputing the IMU sensor
-     * @param imu pointer to the IMU
-     */
-    Sensors(pros::Imu* imu);
-    pros::Imu* imu;
+     * @brief Constructs the Lateral PID
+     * 
+     * @param kP Porportional
+     * @param kI Integeral
+     * @param kD Derivative
+     * @param integralTerm
+     * @param previousError Last error reported
+    */
+
+    public:
+        PID(float kP, float kI, float kD, int integralTerm, int previousError);
+
+        float kP;
+        float kI;
+        float kD;
+        int integralTerm;
+        int previousError;
 };
 
 class Chassis {
     public:
-        /**
-         * @brief Construct a new chassis
-         *
-         * @param drivetrain Drivetrain to be used for the chassis
-         * @param sensors Sensors to be used for the PID
-         */
-        Chassis(Drivetrain drivetrain, Sensors sensors);
+       /**
+       * @brief The config of the chassis
+       * 
+       * @param drivetrain Both left and right side combined
+       * @param LateralSettings the PID for fwd and rev
+       * 
+      */
 
-        private:
-        pros::Mutex mutex;
+     Chassis(Drivetrain drivetrain, PID LateralSettings, PID HorizontalSettings);
 
-        Drivetrain drivetrain;
-        Sensors sensors;
+     Drivetrain drivetrain;
+     PID LateralSettings;
+     PID HorizontalSettings;
 
-}; 
+     /**
+     * @brief Allows for a user to imput dist speed and timout to drive to a point
+     * 
+     * @param dist the distance you want
+     * @param speed The speed you want in volts
+     * @param timeout the timeout/time it gives
+     */
+        void drive(float dist, float speed, float timeout);
 
-}
+    /**
+     * @brief Allows for a user to imput dist speed and timout to drive to a point
+     * 
+     * @param dist the distance you want
+     * @param speed The speed you want in volts
+     * @param timeout the timeout/time it gives
+     */
+        void turn(float angle, float speed, float timeout);
+};
+};

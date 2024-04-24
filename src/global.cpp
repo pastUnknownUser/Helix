@@ -3,40 +3,13 @@
 #include "Helix/api.hpp"
 #include "Helix/chassisConfig.hpp"
 
-pros::Motor leftBack(1,true);
-pros::Motor leftMiddle(3,true);
-pros::Motor leftFront(11,true);
-pros::Motor rightBack(8,false);
-pros::Motor rightMiddle(10,false);
-pros::Motor rightFront(17,false);
-pros::Motor_Group LeftSideDrive({leftBack, leftMiddle, leftFront});
-pros::Motor_Group RightSideDrive({rightBack, rightMiddle, rightFront});
+// pros::Motor leftBack(1,true);
+// pros::Motor leftMiddle(3,true);
+// pros::Motor leftFront(11,true);
+// pros::Motor rightBack(8,false);
+// pros::Motor rightMiddle(10,false);
+// pros::Motor rightFront(17,false);
+// pros::Motor_Group LeftSideDrive({leftBack, leftMiddle, leftFront});
+// pros::Motor_Group RightSideDrive({rightBack, rightMiddle, rightFront});
 
 pros::IMU Inertial(19); // port 19
-
-int main()
-{
-    Helix::Test me;
-    me.leftMotors = &LeftSideDrive;
-    me.rightMotors = &RightSideDrive;
-    me.trackWidth = 10;
-    me.wheelDiameter = 3.25;
-    me.rpm = 360;
-    me.chasePower = 3;
-}
-/*
-Helix::Drivetrain drivetrain {
-    &LeftSideDrive, // left drivetrain motors
-    &RightSideDrive, // right drivetrain motors
-    10, // track width
-    3.25, // wheel diameter
-    360, // wheel rpm
-	5 //Chase Power
-};
-
-Helix::Sensors sensors {
-    &Inertial
-};
-
-Helix::Chassis chassis(drivetrain, sensors);
-*/

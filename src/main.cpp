@@ -3,6 +3,15 @@
 #include "Helix/api.hpp"
 #include "pros/rtos.hpp"
 
+pros::Motor leftBack(1,true);
+pros::Motor leftMiddle(3,true);
+pros::Motor leftFront(11,true);
+pros::Motor rightBack(8,false);
+pros::Motor rightMiddle(10,false);
+pros::Motor rightFront(17,false);
+pros::Motor_Group LeftSideDrive({leftBack, leftMiddle, leftFront});
+pros::Motor_Group RightSideDrive({rightBack, rightMiddle, rightFront});
+
 /**
  * A callback function for LLEMU's center button.
  *
@@ -18,6 +27,35 @@ void on_center_button() {
 		pros::lcd::clear_line(2);
 	}
 }
+
+
+
+Helix::Drivetrain drivetrain(
+	&LeftSideDrive,
+	&RightSideDrive,
+	360, //Drive RPM
+	3.25 // Wheel Diameter
+);
+
+Helix::PID LateralSettings {
+	 10, // kP
+	 0,  // kI
+	 20, // kD
+	 0,  // integralTerm  (Dont change!)
+	 0   // previousError (Dont change!)
+
+};
+
+Helix::PID HorizontalSettings {
+	 10, // kP
+	 0,  // kI
+	 20, // kD
+	 0,  // integralTerm  (Dont change!)
+	 0   // previousError (Dont change!)
+
+};
+
+Helix::Chassis Chassis (drivetrain, LateralSettings, HorizontalSettings);
 
 /**
  * Runs initialization code. This occurs as soon as the program is started.
@@ -63,7 +101,7 @@ void competition_initialize() {}
  */
 
 void autonomous() {
-	moveRobot(10,127);
+	Chassis.drive(20, 12000, 1000);
 }
 
 /**

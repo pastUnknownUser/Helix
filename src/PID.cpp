@@ -31,90 +31,9 @@ int turnPrevError = 0;
 int turnDerivative;
 
 bool resetDriveSensor =false;
-
-bool enableDrivePID = true;
-
 const double wheelDiameter = 3.25; // Diameter of the wheel in inches
 const double rpm = 360.0; // Encoder counts per revolution
 const double tooInches = rpm / (wheelDiameter * 3.14159); // Calculate encoder counts per inch
-
-// Define variables to store target positions
-int left_target_position = 0;
-int right_target_position = 0;
-
-// Define a flag to track whether the robot is currently moving
-bool isMoving = false;
-
-// Function to move the robot a certain distance in inches
-void moveRobot(double distance_in_inches, int speed) {
-
-    // Set the flag to indicate that the robot is moving
-    isMoving = true;
-
-    int leftAvg = (leftFront.get_position() + leftMiddle.get_position() + leftBack.get_position())/3;
-    int rightAvg = (rightFront.get_position() + rightMiddle.get_position() + rightBack.get_position())/3;
-
-    int AveragePosition = (left_target_position + right_target_position)/2;
-
-    error = AveragePosition - distance_in_inches;  //Potential 
-
-    derivative = error - prevError;  //Derivative
-
-    totalError += error * 0.02;
-
-    double lateralMotorPower = error *  kP + derivative * kD + totalError + kI;
-
-    // Calculate target encoder counts
-    int target_encoder_counts = (int)(distance_in_inches * tooInches /* + lateralMotorPower*/);
-
-    // Set target positions
-    left_target_position = leftAvg + target_encoder_counts;
-    right_target_position = rightAvg + target_encoder_counts;
-
-    // Issue motor commands to move the robot
-    LeftSideDrive.move_relative(target_encoder_counts + lateralMotorPower, speed);
-    RightSideDrive.move_relative(target_encoder_counts + lateralMotorPower, speed);
-
-    // Wait until both motors have reached their target positions
-    while (true) {
-        bool left_reached = true;
-        bool right_reached = true;
-
-        // Check if left motors have reached target position
-        if (std::abs(leftFront.get_position() - left_target_position) > 5 ||
-            std::abs(leftMiddle.get_position() - left_target_position) > 5 ||
-            std::abs(leftBack.get_position() - left_target_position) > 5) {
-            left_reached = false;
-        }
-
-        // Check if right motors have reached target position
-        if (std::abs(rightFront.get_position() - right_target_position) > 5 ||
-            std::abs(rightMiddle.get_position() - right_target_position) > 5 ||
-            std::abs(rightBack.get_position() - right_target_position) > 5) {
-            right_reached = false;
-        }
-
-        // Exit loop if both sides reached target
-        if (left_reached && right_reached) {
-            break;
-        }
-        
-        // Check if the robot should stop moving
-        if (!isMoving) {
-            // Stop the motors
-            LeftSideDrive.move_velocity(0);
-            RightSideDrive.move_velocity(0);
-            break;
-        }
-
-        pros::delay(10);
-    }
-
-    // Reset the flag to indicate that the robot has stopped moving
-    isMoving = false;
-
-}
-
 
 
 /*void HelixPID(void* param) {
