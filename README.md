@@ -2,7 +2,7 @@
 
 ## Description
 
-Helix is a from scratch PID Controller for Purdue PROS for Vex V5. 
+Helix is a from scratch PID Controller in Purdue PROS for Vex V5. 
 
 ## Table of Contents
 
