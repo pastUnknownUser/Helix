@@ -44,12 +44,13 @@ Helix::Sensors sensors(
 );
 
 Helix::PID LateralSettings {
-	 10, // kP
+	 100, // kP
 	 0,  // kI
 	 20, // kD
 	 0,  // integralTerm  (Dont change!)
-	 0   // previousError (Dont change!)
-
+	 0,   // previousError (Dont change!)
+	 100 //antiWindup
+	
 };
 
 Helix::PID HorizontalSettings {
@@ -57,11 +58,12 @@ Helix::PID HorizontalSettings {
 	 0,  // kI
 	 20, // kD
 	 0,  // integralTerm  (Dont change!)
-	 0   // previousError (Dont change!)
+	 0,   // previousError (Dont change!)
+	 100 // antiWindup
 
 };
 
-Helix::Chassis Chassis (drivetrain, LateralSettings, HorizontalSettings);
+Helix::Chassis Chassis(drivetrain, LateralSettings, HorizontalSettings, sensors);
 
 /**
  * Runs initialization code. This occurs as soon as the program is started.
@@ -107,7 +109,7 @@ void competition_initialize() {}
  */
 
 void autonomous() {
-	Chassis.drive(20, 12000, 1000);
+	Chassis.drive(10, 127, 1000);
 }
 
 /**

@@ -26,7 +26,7 @@ class Drivetrain {
         */ 
        Drivetrain(pros::MotorGroup* LeftSide, pros::MotorGroup* RightSide, float Rpm, float WheelDiameter);
 
-       pros::MotorGroup* Leftside;
+       pros::MotorGroup* LeftSide;
        pros::MotorGroup* RightSide;
        float Rpm;
        float WheelDiameter;
@@ -55,13 +55,14 @@ class PID {
     */
 
     public:
-        PID(float kP, float kI, float kD, int integralTerm, int previousError);
+        PID(float kP, float kI, float kD, int integralTerm, int previousError, int antiWindup);
 
         float kP;
         float kI;
         float kD;
         int integralTerm;
         int previousError;
+        int antiWindup;
 };
 
 class Chassis {
@@ -99,5 +100,10 @@ class Chassis {
      * @param timeout the timeout/time it gives
      */
         void turn(float angle, float speed, float timeout);
+
+     /**
+     * @brief Function to stop the motors
+     */
+        void stopDrive();
 };
 };
