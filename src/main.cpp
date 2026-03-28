@@ -1,143 +1,205 @@
-#include "main.h"
-#include "PID.hpp"
-#include "Helix/api.hpp"
-#include "pros/rtos.hpp"
-
-pros::Motor leftBack(1,true);
-pros::Motor leftMiddle(3,true);
-pros::Motor leftFront(11,true);
-pros::Motor rightBack(8,false);
-pros::Motor rightMiddle(10,false);
-pros::Motor rightFront(17,false);
-pros::Motor_Group LeftSideDrive({leftBack, leftMiddle, leftFront});
-pros::Motor_Group RightSideDrive({rightBack, rightMiddle, rightFront});
-
-pros::IMU Imu(19); // port 19
-
 /**
- * A callback function for LLEMU's center button.
+ * @file main.cpp
+ * @brief Example implementation of Helix PID library
  *
- * When this callback is fired, it will toggle line 2 of the LCD text between
- * "I was pressed!" and nothing.
+ * This file demonstrates how to set up and use the Helix library
+ * for autonomous robot control.
  */
-void on_center_button() {
-	static bool pressed = false;
-	pressed = !pressed;
-	if (pressed) {
-		pros::lcd::set_text(2, "I was pressed!");
-	} else {
-		pros::lcd::clear_line(2);
-	}
-}
 
+#include "main.h"
+#include "Helix/Helix.hpp"
 
+// ============================================================
+// MOTOR SETUP
+// ============================================================
+// Configure your motors here. Change gear ratios and reversals as needed.
 
+// Left side motors (reversed = true for tank drive)
+pros::Motor leftFront(11, pros::E_MOTOR_GEAR_BLUE, true);
+pros::Motor leftMiddle(3, pros::E_MOTOR_GEAR_BLUE, true);
+pros::Motor leftBack(1, pros::E_MOTOR_GEAR_BLUE, true);
+
+// Right side motors (reversed = false)
+pros::Motor rightFront(17, pros::E_MOTOR_GEAR_BLUE, false);
+pros::Motor rightMiddle(10, pros::E_MOTOR_GEAR_BLUE, false);
+pros::Motor rightBack(8, pros::E_MOTOR_GEAR_BLUE, false);
+
+// Group motors for easier control
+pros::Motor_Group leftSideDrive({leftFront, leftMiddle, leftBack});
+pros::Motor_Group rightSideDrive({rightFront, rightMiddle, rightBack});
+
+// IMU for accurate turning (optional but recommended)
+// Port 19, calibrate in initialize()
+pros::IMU imu(19);
+
+// ============================================================
+// HELIX CHASSIS CONFIGURATION
+// ============================================================
+
+// Configure the drivetrain physical parameters
 Helix::Drivetrain drivetrain(
-	&LeftSideDrive,
-	&RightSideDrive,
-	360, //Drive RPM
-	3.25 // Wheel Diameter
+    &leftSideDrive,   // Left motor group pointer
+    &rightSideDrive,  // Right motor group pointer
+    600,               // Motor RPM (blue = 600, green = 200, red = 100)
+    3.25               // Wheel diameter in inches
 );
 
-Helix::Sensors sensors(
-	&Imu
-);
+// Configure PID controllers
+// Tuning tips:
+// 1. Start with kP only - increase until robot oscillates
+// 2. Add kD to reduce oscillation (try kP/10)
+// 3. Add kI only if there's steady-state error (start very small)
+Helix::PIDController lateralPID(0.8, 0.001, 0.1);  // Drive straight
+Helix::PIDController turnPID(1.5, 0.002, 0.15);       // Turn in place
 
-Helix::PID LateralSettings {
-	 100, // kP
-	 0,  // kI
-	 20, // kD
-	 0,  // integralTerm  (Dont change!)
-	 0,   // previousError (Dont change!)
-	 100 //antiWindup
-	
-};
+// Assemble chassis configuration
+Helix::Chassis::Config config;
+config.drivetrain = drivetrain;
+config.lateralPID = lateralPID;
+config.turnPID = turnPID;
+config.imu = &imu;                          // Optional - enables turnTo()
+config.maxLateralSpeed = 100;               // Limit drive speed (0-127)
+config.maxTurnSpeed = 80;                   // Limit turn speed (0-127)
+config.defaultTimeout = 2000;               // Default 2 second timeout
 
-Helix::PID HorizontalSettings {
-	 10, // kP
-	 0,  // kI
-	 20, // kD
-	 0,  // integralTerm  (Dont change!)
-	 0,   // previousError (Dont change!)
-	 100 // antiWindup
+// Create the chassis controller
+Helix::Chassis chassis(config);
 
-};
+// ============================================================
+// CONTROLLER SETUP
+// ============================================================
 
-Helix::Chassis Chassis(drivetrain, LateralSettings, HorizontalSettings, sensors);
+pros::Controller controller(pros::E_CONTROLLER_MASTER);
+
+// ============================================================
+// COMPETITION FUNCTIONS
+// ============================================================
 
 /**
- * Runs initialization code. This occurs as soon as the program is started.
+ * @brief Runs initialization code when the program starts
  *
- * All other competition modes are blocked by initialize; it is recommended
- * to keep execution time for this mode under a few seconds.
+ * Calibrate IMU, set brake modes, etc.
  */
 void initialize() {
-	pros::lcd::initialize();
-	pros::lcd::set_text(1, "Hello PROS User!");
+    // Initialize LCD for debugging
+    pros::lcd::initialize();
+    pros::lcd::set_text(0, "Helix PID Template");
+    pros::lcd::set_text(1, "Calibrating IMU...");
 
-	pros::lcd::register_btn1_cb(on_center_button);
+    // Calibrate IMU (takes ~2 seconds)
+    imu.reset();
+    while (imu.is_calibrating()) {
+        pros::delay(10);
+    }
+    pros::lcd::set_text(1, "IMU Ready!");
+
+    // Set brake modes (optional)
+    leftSideDrive.set_brake_modes(pros::E_MOTOR_BRAKE_HOLD);
+    rightSideDrive.set_brake_modes(pros::E_MOTOR_BRAKE_HOLD);
 }
 
 /**
- * Runs while the robot is in the disabled state of Field Management System or
- * the VEX Competition Switch, following either autonomous or opcontrol. When
- * the robot is enabled, this task will exit.
+ * @brief Runs while the robot is disabled
  */
-void disabled() {}
+void disabled() {
+    // Nothing to do here
+}
 
 /**
- * Runs after initialize(), and before autonomous when connected to the Field
- * Management System or the VEX Competition Switch. This is intended for
- * competition-specific initialization routines, such as an autonomous selector
- * on the LCD.
- *
- * This task will exit when the robot is enabled and autonomous or opcontrol
- * starts.
+ * @brief Runs after initialize(), before autonomous
+ * Use for competition-specific setup (e.g., autonomous selector)
  */
-void competition_initialize() {}
+void competition_initialize() {
+    // Example: Display autonomous selector on LCD
+    pros::lcd::set_text(2, "Select Auton Mode");
+}
 
 /**
- * Runs the user autonomous code. This function will be started in its own task
- * with the default priority and stack size whenever the robot is enabled via
- * the Field Management System or the VEX Competition Switch in the autonomous
- * mode. Alternatively, this function may be called in initialize or opcontrol
- * for non-competition testing purposes.
+ * @brief Autonomous routine
  *
- * If the robot is disabled or communications is lost, the autonomous task
- * will be stopped. Re-enabling the robot will restart the task, not re-start it
- * from where it left off.
+ * This is where you program your autonomous movements.
+ * Each function blocks until complete or timed out.
  */
-
 void autonomous() {
-	Chassis.drive(10, 127, 1000);
+    // Example 1: Basic movements
+    // Drive forward 24 inches
+    chassis.drive(24);
+
+    // Turn 90 degrees right
+    chassis.turn(90);
+
+    // Drive backward 12 inches at 50% speed
+    chassis.drive(-12, 60);
+
+    // Turn to absolute heading (requires IMU)
+    // 0 = starting orientation, 90 = right, 180 = back, 270 = left
+    chassis.turnTo(0);
+
+    // Example 2: Continuous movements with custom timeout
+    // Drive 48 inches with 5 second timeout
+    bool success = chassis.drive(48, 100, 5000);
+    if (!success) {
+        // Movement timed out
+        pros::lcd::set_text(3, "Drive timed out!");
+    }
+
+    // Example 3: PID tuning during runtime
+    // If robot is oscillating, reduce kD
+    // If robot stops short, increase kP or add kI
+    chassis.getLateralPID().kP = 1.0;  // Adjust as needed
+
+    // Example 4: Complex path
+    chassis.drive(36);      // Forward 36"
+    chassis.turn(45);       // Turn 45° right
+    chassis.drive(12);      // Forward 12"
+    chassis.turn(-45);      // Turn 45° left (back to original heading)
+    chassis.drive(-36);     // Backward 36" to start
 }
 
 /**
- * Runs the operator control code. This function will be started in its own task
- * with the default priority and stack size whenever the robot is enabled via
- * the Field Management System or the VEX Competition Switch in the operator
- * control mode.
+ * @brief Operator control (driver control)
  *
- * If no competition control is connected, this function will run immediately
- * following initialize().
- *
- * If the robot is disabled or communications is lost, the
- * operator control task will be stopped. Re-enabling the robot will restart the
- * task, not resume it from where it left off.
+ * Use the chassis for arcade or tank drive control
  */
 void opcontrol() {
-	   // int leftSpeed = pros::Controller master.get_analog(ANALOG_LEFT_Y);
-        //int rightSpeed = controller.get_analog(ANALOG_RIGHT_Y);
+    pros::lcd::clear_line(2);
+    pros::lcd::set_text(2, "Driver Control");
 
-	pros::Controller master(pros::E_CONTROLLER_MASTER);
+    while (true) {
+        // Get joystick inputs
+        int forward = controller.get_analog(ANALOG_LEFT_Y);   // Forward/back
+        int turn = controller.get_analog(ANALOG_RIGHT_X);     // Turning
 
-	while (true) {
-		int leftSide = master.get_analog(ANALOG_LEFT_Y);
-		int rightSide = master.get_analog(ANALOG_RIGHT_Y);
+        // Arcade drive using chassis
+        chassis.arcade(forward, turn);
 
-		LeftSideDrive.move(leftSide);
-        RightSideDrive.move(rightSide);
+        // Alternative: Tank drive
+        // int left = controller.get_analog(ANALOG_LEFT_Y);
+        // int right = controller.get_analog(ANALOG_RIGHT_Y);
+        // chassis.tank(left, right);
 
-		pros::delay(20);
-	}
+        // Alternative: Direct motor control (faster, less overhead)
+        // leftSideDrive.move(forward + turn);
+        // rightSideDrive.move(forward - turn);
+
+        // Test autonomous movements with button presses
+        // A button = test drive forward
+        if (controller.get_digital_new_press(DIGITAL_A)) {
+            chassis.stop();  // Stop driver control
+            chassis.drive(12);  // Drive 12 inches forward
+        }
+
+        // B button = test turn
+        if (controller.get_digital_new_press(DIGITAL_B)) {
+            chassis.stop();
+            chassis.turn(90);  // Turn 90 degrees
+        }
+
+        // X button = emergency stop
+        if (controller.get_digital(DIGITAL_X)) {
+            chassis.stop();
+        }
+
+        pros::delay(20);  // Run at 50Hz
+    }
 }

@@ -18,3 +18,7 @@ temp.errors
 
 # MacOS
 .DS_Store
+
+*.claude
+
+*CLAUDE.md
