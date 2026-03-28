@@ -10,21 +10,22 @@ Odometry::Odometry(const Config& cfg)
       totalDistance(0),
       prevLeftPos(0),
       prevRightPos(0),
+      prevHorizontalPos(0),
       prevHeading(0),
       firstUpdate(true) {
 
     // Calculate encoder ticks per inch
-    // 360 degrees per rotation, wheel circumference = π * diameter
-    // RPM doesn't matter for encoders - they report in degrees
-    ticksPerInch = 360.0f / (config.wheelDiameter * 3.14159f);
+    // Motor encoders: 360 degrees per rotation
+    // ADI encoders: 360 ticks per rotation
+    float wheelDiam = config.getWheelDiameter();
+    ticksPerInch = 360.0f / (wheelDiam * 3.14159f);
+    ticksPerInchH = ticksPerInch;  // Same for horizontal unless different wheel size
 
     // Initialize with current readings
-    if (config.leftMotors) {
-        prevLeftPos = getLeftPosition();
-    }
-    if (config.rightMotors) {
-        prevRightPos = getRightPosition();
-    }
+    prevLeftPos = getLeftPosition();
+    prevRightPos = getRightPosition();
+    prevHorizontalPos = getHorizontalPosition();
+
     if (config.imu) {
         prevHeading = getHeading();
         currentPose.theta = prevHeading;
@@ -35,40 +36,58 @@ void Odometry::update() {
     // Get current encoder readings
     float leftPos = getLeftPosition();
     float rightPos = getRightPosition();
+    float horizontalPos = getHorizontalPosition();
     float heading = getHeading();
 
     if (firstUpdate) {
         prevLeftPos = leftPos;
         prevRightPos = rightPos;
+        prevHorizontalPos = horizontalPos;
         prevHeading = heading;
         firstUpdate = false;
         return;
     }
 
-    // Calculate deltas
+    // Calculate deltas in inches
     float deltaLeft = (leftPos - prevLeftPos) / ticksPerInch;
     float deltaRight = (rightPos - prevRightPos) / ticksPerInch;
+    float deltaHorizontal = (horizontalPos - prevHorizontalPos) / ticksPerInchH;
 
-    // Average distance traveled
-    float deltaDistance = (deltaLeft + deltaRight) / 2.0f;
-    totalDistance += std::abs(deltaDistance);
+    // Average distance traveled (forward/backward)
+    float deltaForward = (deltaLeft + deltaRight) / 2.0f;
+    totalDistance += std::abs(deltaForward);
 
-    // Calculate heading change
+    // Calculate heading change from IMU (most accurate)
     float deltaHeading = angleDifference(heading, prevHeading);
 
-    // Calculate position change in local frame
-    float deltaXLocal = 0;
-    float deltaYLocal = 0;
+    // Calculate local position change
+    float deltaXLocal, deltaYLocal;
 
     if (std::abs(deltaHeading) < 0.001f) {
-        // Straight line approximation (no turn)
-        deltaXLocal = deltaDistance;
-        deltaYLocal = 0;
+        // Straight line - no arc
+        deltaXLocal = deltaForward;
+        deltaYLocal = deltaHorizontal;  // Strafe from horizontal encoder
     } else {
-        // Arc approximation
-        float radius = deltaDistance / (deltaHeading * 3.14159f / 180.0f);
+        // Arc approximation for forward movement
+        float radius = deltaForward / (deltaHeading * 3.14159f / 180.0f);
         deltaXLocal = radius * std::sin(deltaHeading * 3.14159f / 180.0f);
-        deltaYLocal = radius * (1 - std::cos(deltaHeading * 3.14159f / 180.0f));
+
+        // Y has two components:
+        // 1. Arc component from forward movement
+        // 2. Direct horizontal encoder reading
+        float arcY = radius * (1 - std::cos(deltaHeading * 3.14159f / 180.0f));
+
+        // If we have a horizontal encoder, use it directly
+        // Otherwise approximate from arc
+        if (config.horizontalEncoder) {
+            deltaYLocal = deltaHorizontal;
+            // Account for the fact that horizontal wheel rotates during turn
+            // due to being offset from center of rotation
+            float offsetRotation = deltaHeading * 3.14159f / 180.0f * config.horizontalOffset;
+            deltaYLocal -= offsetRotation;
+        } else {
+            deltaYLocal = arcY;
+        }
     }
 
     // Convert to global coordinates
@@ -79,11 +98,12 @@ void Odometry::update() {
     // Update pose
     currentPose.x += deltaXGlobal;
     currentPose.y += deltaYGlobal;
-    currentPose.theta = heading;  // Use IMU heading directly
+    currentPose.theta = heading;
 
     // Store for next iteration
     prevLeftPos = leftPos;
     prevRightPos = rightPos;
+    prevHorizontalPos = horizontalPos;
     prevHeading = heading;
 }
 
@@ -91,18 +111,37 @@ void Odometry::setPose(const Pose& pose) {
     currentPose = pose;
     prevHeading = pose.theta;
 
-    // Reset encoders to new reference
+    // Reset motor encoders
     if (config.leftMotors) {
         config.leftMotors->tare_position();
-        prevLeftPos = 0;
     }
     if (config.rightMotors) {
         config.rightMotors->tare_position();
-        prevRightPos = 0;
     }
+
+    // Reset ADI encoders (set to 0)
+    if (config.leftEncoder) {
+        config.leftEncoder->reset();
+    }
+    if (config.rightEncoder) {
+        config.rightEncoder->reset();
+    }
+    if (config.horizontalEncoder) {
+        config.horizontalEncoder->reset();
+    }
+
+    prevLeftPos = getLeftPosition();
+    prevRightPos = getRightPosition();
+    prevHorizontalPos = getHorizontalPosition();
 }
 
 float Odometry::getLeftPosition() {
+    // Prefer external encoder if available
+    if (config.leftEncoder) {
+        return static_cast<float>(config.leftEncoder->get_value());
+    }
+
+    // Fall back to motor encoders
     if (!config.leftMotors || config.leftMotors->size() == 0) {
         return 0;
     }
@@ -115,6 +154,12 @@ float Odometry::getLeftPosition() {
 }
 
 float Odometry::getRightPosition() {
+    // Prefer external encoder if available
+    if (config.rightEncoder) {
+        return static_cast<float>(config.rightEncoder->get_value());
+    }
+
+    // Fall back to motor encoders
     if (!config.rightMotors || config.rightMotors->size() == 0) {
         return 0;
     }
@@ -124,6 +169,13 @@ float Odometry::getRightPosition() {
         avg += (*config.rightMotors)[i].get_position();
     }
     return static_cast<float>(avg / config.rightMotors->size());
+}
+
+float Odometry::getHorizontalPosition() {
+    if (config.horizontalEncoder) {
+        return static_cast<float>(config.horizontalEncoder->get_value());
+    }
+    return 0;  // No horizontal tracking available
 }
 
 float Odometry::getHeading() {

@@ -71,14 +71,32 @@ void initialize() {
     leftSideDrive.set_brake_modes(pros::E_MOTOR_BRAKE_HOLD);
     rightSideDrive.set_brake_modes(pros::E_MOTOR_BRAKE_HOLD);
 
-    // Create odometry configuration
+    // ============================================================
+    // ODOMETRY CONFIGURATION
+    // ============================================================
+    // Two options: Motor encoders OR External ADI encoders (tracking wheels)
+    // External encoders are recommended for accuracy - they don't slip!
+
     Helix::Odometry::Config odomConfig;
+
+    // Option 1: Use motor encoders (simpler, less accurate)
     odomConfig.leftMotors = &leftSideDrive;
     odomConfig.rightMotors = &rightSideDrive;
     odomConfig.imu = &imu;
     odomConfig.wheelDiameter = 3.25f;
-    odomConfig.trackWidth = 12.0f;      // Adjust to your robot's track width
-    odomConfig.rpm = 600.0f;
+    odomConfig.trackWidth = 12.0f;
+
+    // Option 2: Use external ADI encoders (uncomment and configure if you have them)
+    // pros::ADIEncoder leftTracking('A', 'B', false);   // Ports A&B, not reversed
+    // pros::ADIEncoder rightTracking('C', 'D', false);  // Ports C&D, not reversed
+    // pros::ADIEncoder horizontalTracking('E', 'F', false); // Optional: horizontal wheel
+    //
+    // odomConfig.leftEncoder = &leftTracking;
+    // odomConfig.rightEncoder = &rightTracking;
+    // odomConfig.horizontalEncoder = &horizontalTracking;  // Optional
+    // odomConfig.externalWheelDiameter = 2.75f;  // Tracking wheel size (often 2.75" omni)
+    // odomConfig.trackWidth = 12.5f;  // Distance between tracking wheels
+    // odomConfig.horizontalOffset = 0.0f;  // Distance from center to horizontal wheel
 
     // Create odometry
     odom = new Helix::Odometry(odomConfig);

@@ -2,6 +2,7 @@
 
 #include "pros/imu.hpp"
 #include "pros/motors.hpp"
+#include "pros/adi.hpp"
 #include <cmath>
 
 namespace Helix {
@@ -76,24 +77,50 @@ class Odometry {
 public:
     /**
      * @brief Configuration for odometry
+     *
+     * Supports both motor encoders and external ADI encoders (tracking wheels).
+     * External encoders are recommended for accuracy as they don't slip.
      */
     struct Config {
-        pros::Motor_Group* leftMotors;      // Left drive motors (can be nullptr if using tracking wheels)
-        pros::Motor_Group* rightMotors;     // Right drive motors (can be nullptr if using tracking wheels)
+        // Motor groups (used if external encoders not provided)
+        pros::Motor_Group* leftMotors;
+        pros::Motor_Group* rightMotors;
+
+        // External ADI encoders for tracking wheels (optional but recommended)
+        // These are more accurate than motor encoders as they don't slip
+        pros::ADIEncoder* leftEncoder;      // Left tracking wheel encoder
+        pros::ADIEncoder* rightEncoder;     // Right tracking wheel encoder
+
+        // Center/horizontal tracking wheel (optional, for X position tracking)
+        pros::ADIEncoder* horizontalEncoder;
+
         pros::IMU* imu;                     // IMU for heading (required)
 
         float wheelDiameter;                // Wheel diameter in inches
-        float trackWidth;                 // Distance between left/right wheels in inches
-        float rpm;                        // Motor RPM (if using drive wheels)
+        float trackWidth;                   // Distance between left/right wheels in inches
+        float rpm;                          // Motor RPM (if using drive wheels)
 
-        // Tracking wheels (optional - for more accurate tracking)
-        // Use ADI encoders for dedicated tracking wheels
-        // float trackingWheelDiameter = 2.75;
-        // float trackingWidth = 12.0;      // Distance between left/right tracking wheels
+        // External encoder wheel diameters (if different from drive wheels)
+        float externalWheelDiameter;        // Default same as wheelDiameter
+
+        // Horizontal wheel offset from robot center (inches, positive = forward)
+        // Needed if using horizontalEncoder
+        float horizontalOffset;
 
         Config()
-            : leftMotors(nullptr), rightMotors(nullptr), imu(nullptr),
-              wheelDiameter(3.25f), trackWidth(12.0f), rpm(600.0f) {}
+            : leftMotors(nullptr), rightMotors(nullptr),
+              leftEncoder(nullptr), rightEncoder(nullptr), horizontalEncoder(nullptr),
+              imu(nullptr),
+              wheelDiameter(3.25f), trackWidth(12.0f), rpm(600.0f),
+              externalWheelDiameter(0), horizontalOffset(0) {}
+
+        /**
+         * @brief Get the effective wheel diameter
+         * Returns external wheel diameter if set, otherwise drive wheel diameter
+         */
+        float getWheelDiameter() const {
+            return externalWheelDiameter > 0 ? externalWheelDiameter : wheelDiameter;
+        }
     };
 
     /**
@@ -159,13 +186,16 @@ private:
     // Previous encoder values for delta calculation
     float prevLeftPos;
     float prevRightPos;
+    float prevHorizontalPos;
     float prevHeading;
 
-    // Conversion factor
-    float ticksPerInch;
+    // Conversion factors
+    float ticksPerInch;         // For vertical (forward) movement
+    float ticksPerInchH;        // For horizontal (strafe) movement
 
     float getLeftPosition();
     float getRightPosition();
+    float getHorizontalPosition();
     float getHeading();
 
     bool firstUpdate;
