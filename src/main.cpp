@@ -1,9 +1,9 @@
 /**
  * @file main.cpp
- * @brief Example implementation of Helix PID library
+ * @brief Example implementation of Helix PID library with Odometry
  *
  * This file demonstrates how to set up and use the Helix library
- * for autonomous robot control.
+ * for autonomous robot control with position tracking.
  */
 
 #include "main.h"
@@ -28,42 +28,16 @@ pros::Motor rightBack(8, pros::E_MOTOR_GEAR_BLUE, false);
 pros::Motor_Group leftSideDrive({leftFront, leftMiddle, leftBack});
 pros::Motor_Group rightSideDrive({rightFront, rightMiddle, rightBack});
 
-// IMU for accurate turning (optional but recommended)
-// Port 19, calibrate in initialize()
+// IMU for accurate turning and heading (required for odometry)
 pros::IMU imu(19);
 
 // ============================================================
-// HELIX CHASSIS CONFIGURATION
+// HELIX CONFIGURATION
 // ============================================================
 
-// Configure the drivetrain physical parameters
-Helix::Drivetrain drivetrain(
-    &leftSideDrive,   // Left motor group pointer
-    &rightSideDrive,  // Right motor group pointer
-    600,               // Motor RPM (blue = 600, green = 200, red = 100)
-    3.25               // Wheel diameter in inches
-);
-
-// Configure PID controllers
-// Tuning tips:
-// 1. Start with kP only - increase until robot oscillates
-// 2. Add kD to reduce oscillation (try kP/10)
-// 3. Add kI only if there's steady-state error (start very small)
-Helix::PIDController lateralPID(0.8, 0.001, 0.1);  // Drive straight
-Helix::PIDController turnPID(1.5, 0.002, 0.15);       // Turn in place
-
-// Assemble chassis configuration
-Helix::Chassis::Config config;
-config.drivetrain = drivetrain;
-config.lateralPID = lateralPID;
-config.turnPID = turnPID;
-config.imu = &imu;                          // Optional - enables turnTo()
-config.maxLateralSpeed = 100;               // Limit drive speed (0-127)
-config.maxTurnSpeed = 80;                   // Limit turn speed (0-127)
-config.defaultTimeout = 2000;               // Default 2 second timeout
-
-// Create the chassis controller
-Helix::Chassis chassis(config);
+// Declare pointers - initialized in initialize()
+Helix::Chassis* chassis = nullptr;
+Helix::Odometry* odom = nullptr;
 
 // ============================================================
 // CONTROLLER SETUP
@@ -78,12 +52,12 @@ pros::Controller controller(pros::E_CONTROLLER_MASTER);
 /**
  * @brief Runs initialization code when the program starts
  *
- * Calibrate IMU, set brake modes, etc.
+ * Calibrate IMU, set brake modes, initialize odometry, etc.
  */
 void initialize() {
     // Initialize LCD for debugging
     pros::lcd::initialize();
-    pros::lcd::set_text(0, "Helix PID Template");
+    pros::lcd::set_text(0, "Helix PID + Odom");
     pros::lcd::set_text(1, "Calibrating IMU...");
 
     // Calibrate IMU (takes ~2 seconds)
@@ -96,6 +70,41 @@ void initialize() {
     // Set brake modes (optional)
     leftSideDrive.set_brake_modes(pros::E_MOTOR_BRAKE_HOLD);
     rightSideDrive.set_brake_modes(pros::E_MOTOR_BRAKE_HOLD);
+
+    // Create odometry configuration
+    Helix::Odometry::Config odomConfig;
+    odomConfig.leftMotors = &leftSideDrive;
+    odomConfig.rightMotors = &rightSideDrive;
+    odomConfig.imu = &imu;
+    odomConfig.wheelDiameter = 3.25f;
+    odomConfig.trackWidth = 12.0f;      // Adjust to your robot's track width
+    odomConfig.rpm = 600.0f;
+
+    // Create odometry
+    odom = new Helix::Odometry(odomConfig);
+
+    // Create chassis configuration
+    Helix::Chassis::Config chassisConfig;
+    chassisConfig.drivetrain = Helix::Drivetrain(
+        &leftSideDrive,
+        &rightSideDrive,
+        600,
+        3.25
+    );
+    chassisConfig.lateralPID = Helix::PIDController(0.8, 0.001, 0.1);
+    chassisConfig.turnPID = Helix::PIDController(1.5, 0.002, 0.15);
+    chassisConfig.imu = &imu;
+    chassisConfig.maxLateralSpeed = 100;
+    chassisConfig.maxTurnSpeed = 80;
+    chassisConfig.defaultTimeout = 2000;
+
+    // Create chassis
+    chassis = new Helix::Chassis(chassisConfig);
+
+    // Link odometry to chassis
+    chassis->setOdometry(odom);
+
+    pros::lcd::set_text(2, "Ready!");
 }
 
 /**
@@ -111,93 +120,119 @@ void disabled() {
  */
 void competition_initialize() {
     // Example: Display autonomous selector on LCD
-    pros::lcd::set_text(2, "Select Auton Mode");
+    pros::lcd::set_text(3, "Select Auton Mode");
 }
 
 /**
- * @brief Autonomous routine
+ * @brief Autonomous routine with odometry
  *
- * This is where you program your autonomous movements.
- * Each function blocks until complete or timed out.
+ * Uses field coordinates to navigate. (0,0) is starting position.
+ * X = forward/back (positive = forward)
+ * Y = left/right (positive = right)
+ * Theta = heading (0 = forward, 90 = right, etc.)
  */
 void autonomous() {
-    // Example 1: Basic movements
-    // Drive forward 24 inches
-    chassis.drive(24);
+    // Reset to starting position
+    odom->setPose(Helix::Pose(0, 0, 0));
 
-    // Turn 90 degrees right
-    chassis.turn(90);
+    // ============================================================
+    // EXAMPLE 1: Drive to specific coordinates
+    // ============================================================
+    // Drive forward 24 inches (X = 24, Y = 0)
+    chassis->driveToPoint(24, 0);
 
-    // Drive backward 12 inches at 50% speed
-    chassis.drive(-12, 60);
+    // Drive to a point diagonally right (X = 36, Y = 24)
+    chassis->driveToPoint(36, 24);
 
-    // Turn to absolute heading (requires IMU)
-    // 0 = starting orientation, 90 = right, 180 = back, 270 = left
-    chassis.turnTo(0);
+    // Turn to face the origin
+    chassis->turnToPoint(0, 0);
 
-    // Example 2: Continuous movements with custom timeout
-    // Drive 48 inches with 5 second timeout
-    bool success = chassis.drive(48, 100, 5000);
-    if (!success) {
-        // Movement timed out
-        pros::lcd::set_text(3, "Drive timed out!");
+    // Drive back to start
+    chassis->driveToPoint(0, 0);
+
+    // Turn to original heading
+    chassis->turnTo(0);
+
+    // ============================================================
+    // EXAMPLE 2: Square pattern using coordinates
+    // ============================================================
+    // Reset at center of field
+    odom->setPose(Helix::Pose(0, 0, 0));
+
+    // Drive in a square
+    for (int i = 0; i < 4; i++) {
+        // Drive forward 24 inches
+        chassis->driveToPoint(
+            odom->getPose().x + 24 * std::cos(odom->getPose().theta * 3.14159 / 180),
+            odom->getPose().y + 24 * std::sin(odom->getPose().theta * 3.14159 / 180)
+        );
+
+        // Turn 90 degrees right
+        chassis->turn(90);
     }
 
-    // Example 3: PID tuning during runtime
-    // If robot is oscillating, reduce kD
-    // If robot stops short, increase kP or add kI
-    chassis.getLateralPID().kP = 1.0;  // Adjust as needed
-
-    // Example 4: Complex path
-    chassis.drive(36);      // Forward 36"
-    chassis.turn(45);       // Turn 45° right
-    chassis.drive(12);      // Forward 12"
-    chassis.turn(-45);      // Turn 45° left (back to original heading)
-    chassis.drive(-36);     // Backward 36" to start
+    // ============================================================
+    // EXAMPLE 3: Traditional movements still work
+    // ============================================================
+    chassis->drive(24);      // Drive 24 inches forward
+    chassis->turn(90);       // Turn 90 degrees right
+    chassis->drive(-12);      // Drive 12 inches backward
 }
 
 /**
  * @brief Operator control (driver control)
  *
- * Use the chassis for arcade or tank drive control
+ * Displays odometry data on LCD for debugging
  */
 void opcontrol() {
     pros::lcd::clear_line(2);
     pros::lcd::set_text(2, "Driver Control");
 
+    int loopCount = 0;
+
     while (true) {
+        // Update odometry
+        odom->update();
+
+        // Get current pose
+        Helix::Pose pose = odom->getPose();
+
+        // Display on LCD every 10 loops (to avoid flickering)
+        if (loopCount % 10 == 0) {
+            pros::lcd::print(4, "X: %.1f Y: %.1f", pose.x, pose.y);
+            pros::lcd::print(5, "Heading: %.1f", pose.theta);
+            pros::lcd::print(6, "Dist: %.1f", odom->getTotalDistance());
+        }
+        loopCount++;
+
         // Get joystick inputs
-        int forward = controller.get_analog(ANALOG_LEFT_Y);   // Forward/back
-        int turn = controller.get_analog(ANALOG_RIGHT_X);     // Turning
+        int forward = controller.get_analog(ANALOG_LEFT_Y);
+        int turn = controller.get_analog(ANALOG_RIGHT_X);
 
         // Arcade drive using chassis
-        chassis.arcade(forward, turn);
+        chassis->arcade(forward, turn);
 
-        // Alternative: Tank drive
-        // int left = controller.get_analog(ANALOG_LEFT_Y);
-        // int right = controller.get_analog(ANALOG_RIGHT_Y);
-        // chassis.tank(left, right);
+        // Reset odometry with button press
+        if (controller.get_digital_new_press(DIGITAL_Y)) {
+            odom->setPose(Helix::Pose(0, 0, 0));
+            pros::lcd::set_text(7, "Odom Reset!");
+        }
 
-        // Alternative: Direct motor control (faster, less overhead)
-        // leftSideDrive.move(forward + turn);
-        // rightSideDrive.move(forward - turn);
-
-        // Test autonomous movements with button presses
-        // A button = test drive forward
+        // Test drive to point with A button
         if (controller.get_digital_new_press(DIGITAL_A)) {
-            chassis.stop();  // Stop driver control
-            chassis.drive(12);  // Drive 12 inches forward
+            chassis->stop();
+            chassis->driveToPoint(24, 0, 80, 3000);  // Drive to (24, 0)
         }
 
-        // B button = test turn
+        // Test turn to point with B button
         if (controller.get_digital_new_press(DIGITAL_B)) {
-            chassis.stop();
-            chassis.turn(90);  // Turn 90 degrees
+            chassis->stop();
+            chassis->turnToPoint(0, 24);  // Turn to face +Y
         }
 
-        // X button = emergency stop
+        // Emergency stop with X
         if (controller.get_digital(DIGITAL_X)) {
-            chassis.stop();
+            chassis->stop();
         }
 
         pros::delay(20);  // Run at 50Hz

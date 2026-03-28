@@ -45,6 +45,7 @@
  */
 
 #include "Helix/PIDController.hpp"
+#include "Helix/Odometry.hpp"
 #include "Helix/Chassis.hpp"
 
 /**

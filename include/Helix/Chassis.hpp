@@ -6,6 +6,10 @@
 
 namespace Helix {
 
+// Forward declarations
+class Odometry;
+struct Pose;
+
 /**
  * @brief Drivetrain configuration - groups motors with physical parameters
  *
@@ -25,10 +29,26 @@ namespace Helix {
  * @endcode
  */
 struct Drivetrain {
-    pros::MotorGroup* leftMotors;
-    pros::MotorGroup* rightMotors;
+    pros::Motor_Group* leftMotors;
+    pros::Motor_Group* rightMotors;
     float rpm;              // Motor RPM
     float wheelDiameter;    // In inches
+
+    /**
+     * @brief Default constructor
+     */
+    Drivetrain() = default;
+
+    /**
+     * @brief Construct a new Drivetrain with motor groups and physical parameters
+     *
+     * @param left Pointer to left motor group
+     * @param right Pointer to right motor group
+     * @param motorRPM Motor RPM (blue = 600, green = 200, red = 100)
+     * @param wheelDiam Wheel diameter in inches
+     */
+    Drivetrain(pros::Motor_Group* left, pros::Motor_Group* right, float motorRPM, float wheelDiam)
+        : leftMotors(left), rightMotors(right), rpm(motorRPM), wheelDiameter(wheelDiam) {}
 
     /**
      * @brief Calculate encoder ticks per inch of travel
@@ -277,6 +297,64 @@ public:
      */
     PIDController& getTurnPID() { return turnPID_; }
 
+    /**
+     * @brief Drive to a specific field coordinate using odometry
+     *
+     * @param x Target X coordinate in inches
+     * @param y Target Y coordinate in inches
+     * @param maxSpeed Maximum speed 0-127 (optional)
+     * @param timeout Timeout in milliseconds (optional)
+     * @return true if target reached, false if timed out
+     *
+     * Requires Odometry to be set via setOdometry()
+     *
+     * Example:
+     * @code
+     * chassis->driveToPoint(24, 24);  // Drive to field coordinate (24, 24)
+     * @endcode
+     */
+    bool driveToPoint(float x, float y, float maxSpeed = -1, int timeout = -1);
+
+    /**
+     * @brief Turn to face a specific field coordinate
+     *
+     * @param x Target X coordinate in inches
+     * @param y Target Y coordinate in inches
+     * @param maxSpeed Maximum speed 0-127 (optional)
+     * @param timeout Timeout in milliseconds (optional)
+     * @return true if target reached, false if timed out
+     *
+     * Requires Odometry to be set via setOdometry()
+     */
+    bool turnToPoint(float x, float y, float maxSpeed = -1, int timeout = -1);
+
+    /**
+     * @brief Set the odometry system for position tracking
+     *
+     * @param odom Pointer to Odometry instance
+     *
+     * Example:
+     * @code
+     * Helix::Odometry odom(config);
+     * chassis->setOdometry(&odom);
+     * @endcode
+     */
+    void setOdometry(Odometry* odom) { odometry_ = odom; }
+
+    /**
+     * @brief Get current pose from odometry
+     *
+     * @return Pose Current x, y, theta (returns 0,0,0 if no odometry set)
+     */
+    Pose getPose() const;
+
+    /**
+     * @brief Set robot pose (requires odometry)
+     *
+     * @param pose New pose to set
+     */
+    void setPose(const Pose& pose);
+
 private:
     Drivetrain drivetrain_;
     PIDController lateralPID_;
@@ -285,6 +363,7 @@ private:
     float maxLateralSpeed_;
     float maxTurnSpeed_;
     int defaultTimeout_;
+    Odometry* odometry_;  // Optional odometry system
 
     /**
      * @brief Wait for a movement to complete with timeout

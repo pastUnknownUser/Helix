@@ -1,4 +1,5 @@
 #include "Helix/Chassis.hpp"
+#include "Helix/Odometry.hpp"
 #include "pros/rtos.hpp"
 
 namespace Helix {
@@ -60,7 +61,8 @@ Chassis::Chassis(const Config& config)
       imu_(config.imu),
       maxLateralSpeed_(config.maxLateralSpeed),
       maxTurnSpeed_(config.maxTurnSpeed),
-      defaultTimeout_(config.defaultTimeout) {}
+      defaultTimeout_(config.defaultTimeout),
+      odometry_(nullptr) {}
 
 bool Chassis::waitForSettle(PIDController& pid, int timeout) {
     int elapsed = 0;
@@ -249,6 +251,126 @@ void Chassis::arcade(int forward, int turn) {
     }
 
     tank(left, right);
+}
+
+bool Chassis::driveToPoint(float x, float y, float maxSpeed, int timeout) {
+    if (!odometry_) {
+        // Fall back to regular drive if no odometry
+        return false;
+    }
+
+    // Use defaults if not specified
+    if (maxSpeed < 0) maxSpeed = maxLateralSpeed_;
+    if (timeout < 0) timeout = defaultTimeout_;
+
+    // Reset PID
+    lateralPID_.reset();
+    lateralPID_.setOutputLimits(-maxSpeed, maxSpeed);
+
+    // Create a PID for heading correction during movement
+    PIDController headingPID(1.0, 0.0, 0.1);
+    headingPID.setOutputLimits(-40, 40);  // Small heading corrections
+
+    Pose target(x, y, 0);
+    int elapsed = 0;
+    const int dt = 20;
+
+    while (elapsed < timeout) {
+        Pose current = odometry_->getPose();
+
+        // Calculate distance to target
+        float distance = current.distanceTo(target);
+
+        // Check if we've arrived
+        if (distance < 1.0f) {  // Within 1 inch
+            break;
+        }
+
+        // Calculate angle to target
+        float angleToTarget = current.angleTo(target);
+
+        // Calculate heading error
+        float headingError = Odometry::angleDifference(angleToTarget, current.theta);
+
+        // Compute outputs
+        float distanceOutput = lateralPID_.compute(0, -distance);  // Drive toward target
+        float headingOutput = headingPID.compute(0, -headingError);  // Turn toward target
+
+        // Combine: distance drives forward/back, heading steers
+        int leftSpeed = (int)(distanceOutput - headingOutput);
+        int rightSpeed = (int)(distanceOutput + headingOutput);
+
+        // Clamp to motor range
+        if (leftSpeed > maxSpeed) leftSpeed = (int)maxSpeed;
+        if (leftSpeed < -maxSpeed) leftSpeed = (int)-maxSpeed;
+        if (rightSpeed > maxSpeed) rightSpeed = (int)maxSpeed;
+        if (rightSpeed < -maxSpeed) rightSpeed = (int)-maxSpeed;
+
+        tank(leftSpeed, rightSpeed);
+
+        pros::delay(dt);
+        elapsed += dt;
+    }
+
+    stop();
+    return (elapsed < timeout);
+}
+
+bool Chassis::turnToPoint(float x, float y, float maxSpeed, int timeout) {
+    if (!odometry_) {
+        // Fall back to regular turn if no odometry
+        return false;
+    }
+
+    // Use defaults if not specified
+    if (maxSpeed < 0) maxSpeed = maxTurnSpeed_;
+    if (timeout < 0) timeout = defaultTimeout_;
+
+    // Reset PID
+    turnPID_.reset();
+    turnPID_.setOutputLimits(-maxSpeed, maxSpeed);
+
+    Pose target(x, y, 0);
+    int elapsed = 0;
+    const int dt = 20;
+
+    turnPID_.setTolerance(2.0, 3);  // Within 2 degrees
+
+    while (!turnPID_.isSettled() && elapsed < timeout) {
+        Pose current = odometry_->getPose();
+
+        // Calculate angle to target
+        float angleToTarget = current.angleTo(target);
+
+        // Calculate error
+        float error = Odometry::angleDifference(angleToTarget, current.theta);
+
+        // Compute output
+        float output = turnPID_.compute(0, -error);
+
+        // Apply to motors (opposite sides for turning)
+        drivetrain_.leftMotors->move(output);
+        drivetrain_.rightMotors->move(-output);
+
+        pros::delay(dt);
+        elapsed += dt;
+    }
+
+    stop();
+    return turnPID_.isSettled();
+}
+
+Pose Chassis::getPose() const {
+    if (odometry_) {
+        return odometry_->getPose();
+    }
+    return Pose(0, 0, 0);
+}
+
+void Chassis::setPose(const Pose& pose) {
+    if (odometry_) {
+        odometry_->setPose(pose);
+    }
 }
 
 } // namespace Helix
