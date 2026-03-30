@@ -5,7 +5,7 @@ namespace Helix {
 
 PIDController::PIDController(double kP, double kI, double kD, double dt)
     : kP(kP), kI(kI), kD(kD), dt(dt),
-      error(0), prevError(0), integral(0), derivative(0),
+      error(0), prevError(0), prevMeasurement(0), integral(0), derivative(0),
       outputMin(-127), outputMax(127),
       integralLimit(1000), tolerance(0.5), settleCount(0), settleRequired(5) {}
 
@@ -16,21 +16,29 @@ double PIDController::compute(double setpoint, double measurement) {
     // Proportional term
     double pTerm = kP * error;
 
-    // Integral term with anti-windup
-    integral += error * dt;
-    if (integral > integralLimit) {
-        integral = integralLimit;
-    } else if (integral < -integralLimit) {
-        integral = -integralLimit;
+    // Integral term with anti-windup (only integrate if not saturated)
+    double outputWithoutI = kP * error + kD * ((error - prevError) / dt);
+    bool saturated = outputWithoutI > outputMax || outputWithoutI < outputMin;
+
+    if (!saturated || std::abs(error) < tolerance) {
+        integral += error * dt;
+        if (integral > integralLimit) {
+            integral = integralLimit;
+        } else if (integral < -integralLimit) {
+            integral = -integralLimit;
+        }
     }
     double iTerm = kI * integral;
 
-    // Derivative term (on measurement to avoid derivative kick)
-    derivative = (error - prevError) / dt;
-    double dTerm = kD * derivative;
+    // Derivative term on MEASUREMENT (not error) to avoid derivative kick
+    // This computes: -d(measurement)/dt instead of d(error)/dt
+    // Since error = setpoint - measurement, d(error)/dt = -d(measurement)/dt
+    derivative = (measurement - prevMeasurement) / dt;
+    double dTerm = -kD * derivative;
 
-    // Store error for next iteration
+    // Store for next iteration
     prevError = error;
+    prevMeasurement = measurement;
 
     // Sum terms
     double output = pTerm + iTerm + dTerm;
@@ -55,6 +63,7 @@ double PIDController::compute(double setpoint, double measurement) {
 void PIDController::reset() {
     error = 0;
     prevError = 0;
+    prevMeasurement = 0;
     integral = 0;
     derivative = 0;
     settleCount = 0;

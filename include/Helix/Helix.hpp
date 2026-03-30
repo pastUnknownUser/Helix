@@ -48,6 +48,8 @@
 #include "Helix/Odometry.hpp"
 #include "Helix/Chassis.hpp"
 #include "Helix/PIDMotor.hpp"
+#include "Helix/MotionProfile.hpp"
+#include "Helix/Logger.hpp"
 
 /**
  * @namespace Helix

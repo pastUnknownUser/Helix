@@ -159,7 +159,8 @@ public:
 private:
     double dt;                  // Time step
     double error;               // Current error
-    double prevError;           // Previous error for derivative
+    double prevError;           // Previous error
+    double prevMeasurement;     // Previous measurement for derivative-on-measurement
     double integral;            // Accumulated error
     double derivative;          // Rate of change
     double outputMin;           // Output limits

@@ -2,6 +2,7 @@
 
 #include "Helix/PIDController.hpp"
 #include "Helix/Odometry.hpp"
+#include "Helix/MotionProfile.hpp"
 #include "pros/motors.hpp"
 #include "pros/imu.hpp"
 
@@ -156,6 +157,23 @@ public:
         float maxLateralSpeed = 127;        // Max voltage for driving (0-127)
         float maxTurnSpeed = 127;           // Max voltage for turning (0-127)
         int defaultTimeout = 2000;          // Default movement timeout in ms
+
+        // Feedforward gains (voltage = kV*velocity + kA*acceleration + kS*sign(velocity))
+        double lateralkV = 0.0;              // Velocity feedforward (volts/(inch/sec))
+        double lateralkA = 0.0;              // Acceleration feedforward (volts/(inch/sec^2))
+        double lateralkS = 0.0;              // Static friction (volts)
+        double turnkV = 0.0;                 // Turn velocity feedforward
+        double turnkA = 0.0;                 // Turn acceleration feedforward
+        double turnkS = 0.0;                 // Turn static friction
+
+        // Motion profiling (set useMotionProfile to true to enable)
+        bool useMotionProfile = false;
+        double maxJerk = 40.0;               // Jerk limit (units/sec^3)
+        double maxAcceleration = 16.0;       // Acceleration limit (units/sec^2)
+        double maxVelocity = 60.0;           // Velocity limit (units/sec)
+
+        // Slew rate limiting (volts per second, 0 to disable)
+        double slewRate = 0.0;
     };
 
     /**
@@ -176,7 +194,7 @@ public:
     explicit Chassis(const Config& config);
 
     /**
-     * @brief Drive forward or backward a specific distance
+     * @brief Drive forward or backward a specific distance (blocking)
      *
      * @param distance Distance in inches (positive = forward, negative = backward)
      * @param maxSpeed Maximum speed 0-127 (optional, uses config default if not specified)
@@ -195,42 +213,69 @@ public:
     bool drive(float distance, float maxSpeed = -1, int timeout = -1);
 
     /**
-     * @brief Turn relative to current heading
+     * @brief Start driving asynchronously (non-blocking)
      *
-     * @param angle Angle to turn in degrees (positive = right/clockwise)
+     * @param distance Distance in inches
      * @param maxSpeed Maximum speed 0-127 (optional)
      * @param timeout Timeout in milliseconds (optional)
-     * @return true if target reached, false if timed out
      *
      * Example:
      * @code
-     * // Turn 90 degrees right
-     * chassis.turn(90);
-     *
-     * // Turn 45 degrees left at slower speed
-     * chassis.turn(-45, 60);
+     * // Start async drive, do other work, then wait
+     * chassis.driveAsync(24);
+     * // ... other operations ...
+     * chassis.waitUntilSettled();  // Wait for completion
      * @endcode
+     */
+    void driveAsync(float distance, float maxSpeed = -1, int timeout = -1);
+
+    /**
+     * @brief Turn relative to current heading (blocking)
      */
     bool turn(float angle, float maxSpeed = -1, int timeout = -1);
 
     /**
-     * @brief Turn to an absolute heading (requires IMU)
+     * @brief Start turning asynchronously (non-blocking)
      *
-     * @param heading Target heading in degrees (0-360)
+     * @param angle Angle to turn in degrees
      * @param maxSpeed Maximum speed 0-127 (optional)
      * @param timeout Timeout in milliseconds (optional)
-     * @return true if target reached, false if timed out
-     *
-     * Example:
-     * @code
-     * // Turn to face North (assuming IMU calibrated)
-     * chassis.turnTo(0);
-     *
-     * // Turn to face East
-     * chassis.turnTo(90);
-     * @endcode
+     */
+    void turnAsync(float angle, float maxSpeed = -1, int timeout = -1);
+
+    /**
+     * @brief Turn to absolute heading (blocking)
      */
     bool turnTo(float heading, float maxSpeed = -1, int timeout = -1);
+
+    /**
+     * @brief Start turn to heading asynchronously (non-blocking)
+     *
+     * @param heading Target heading in degrees
+     * @param maxSpeed Maximum speed 0-127 (optional)
+     * @param timeout Timeout in milliseconds (optional)
+     */
+    void turnToAsync(float heading, float maxSpeed = -1, int timeout = -1);
+
+    /**
+     * @brief Check if the current motion is settled
+     *
+     * @return true if motion complete or no motion in progress
+     */
+    bool isSettled() const;
+
+    /**
+     * @brief Wait until current motion settles or times out
+     *
+     * @param timeout Maximum time to wait in ms (-1 for default)
+     * @return true if settled, false if timed out
+     */
+    bool waitUntilSettled(int timeout = -1);
+
+    /**
+     * @brief Cancel any in-progress motion
+     */
+    void stopMotion();
 
     /**
      * @brief Stop the chassis with brake mode
@@ -371,8 +416,88 @@ private:
     float maxLateralSpeed_;
     float maxTurnSpeed_;
     int defaultTimeout_;
-    Odometry* odometry_;  // Optional odometry system
-    NavConfig navConfig_;   // Navigation config for point-to-point movements
+    Odometry* odometry_;
+    NavConfig navConfig_;
+
+    // Feedforward gains
+    double lateralkV_, lateralkA_, lateralkS_;
+    double turnkV_, turnkA_, turnkS_;
+
+    // Motion profiling
+    bool useMotionProfile_;
+    MotionProfile lateralProfile_;
+    MotionProfile turnProfile_;
+
+    // Slew rate limiting
+    double slewRate_;
+    double lastLeftOutput_;
+    double lastRightOutput_;
+
+    // Async motion state
+    enum class MotionType {
+        NONE,
+        DRIVE,
+        TURN,
+        TURN_TO
+    };
+    MotionType currentMotion_;
+    bool motionSettled_;
+    float motionTarget_;
+    float motionStartTime_;
+    float motionTimeout_;
+    float motionMaxSpeed_;
+
+    /**
+     * @brief Apply slew rate limiting to motor outputs
+     *
+     * @param target Target output voltage
+     * @param lastOutput Previous output (reference, will be updated)
+     * @return double Slew-limited output
+     */
+    double applySlewRate(double target, double& lastOutput);
+
+    /**
+     * @brief Calculate feedforward output
+     *
+     * @param velocity Current velocity
+     * @param acceleration Current acceleration
+     * @param kV Velocity gain
+     * @param kA Acceleration gain
+     * @param kS Static friction gain
+     * @return double Feedforward output
+     */
+    double calculateFeedforward(double velocity, double acceleration,
+                                 double kV, double kA, double kS);
+
+    /**
+     * @brief Execute the drive control loop (used by both sync and async)
+     *
+     * @param distance Target distance in inches
+     * @param maxSpeed Max speed 0-127
+     * @param timeout Timeout in ms
+     * @return true if settled
+     */
+    bool executeDrive(float distance, float maxSpeed, int timeout);
+
+    /**
+     * @brief Execute the turn control loop
+     *
+     * @param angle Target angle
+     * @param maxSpeed Max speed 0-127
+     * @param timeout Timeout in ms
+     * @return true if settled
+     */
+    bool executeTurn(float angle, float maxSpeed, int timeout);
+
+    /**
+     * @brief Execute the turnTo control loop
+     *
+     * @param heading Target heading
+     * @param maxSpeed Max speed 0-127
+     * @param timeout Timeout in ms
+     * @return true if settled
+     */
+    bool executeTurnTo(float heading, float maxSpeed, int timeout);
 
     /**
      * @brief Wait for a movement to complete with timeout
