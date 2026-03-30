@@ -66,7 +66,12 @@ void Odometry::update() {
     if (std::abs(deltaHeading) < 0.001f) {
         // Straight line - no arc
         deltaXLocal = deltaForward;
-        deltaYLocal = deltaHorizontal;  // Strafe from horizontal encoder
+        // Use horizontal encoder directly for Y, accounting for heading
+        if (config.horizontalEncoder) {
+            deltaYLocal = deltaHorizontal;
+        } else {
+            deltaYLocal = 0;
+        }
     } else {
         // Arc approximation for forward movement
         float radius = deltaForward / (deltaHeading * 3.14159f / 180.0f);

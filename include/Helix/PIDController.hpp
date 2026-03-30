@@ -36,6 +36,26 @@ public:
     PIDController(double kP, double kI, double kD, double dt = 0.02);
 
     /**
+     * @brief Copy constructor - creates new controller with same gains but reset state
+     */
+    PIDController(const PIDController& other) = default;
+
+    /**
+     * @brief Copy assignment - copies gains but maintains current state
+     */
+    PIDController& operator=(const PIDController&) = default;
+
+    /**
+     * @brief Move constructor - transfers state to new instance
+     */
+    PIDController(PIDController&&) = default;
+
+    /**
+     * @brief Move assignment - transfers state to existing instance
+     */
+    PIDController& operator=(PIDController&&) = default;
+
+    /**
      * @brief Compute PID output for this timestep
      *
      * @param setpoint Target value (e.g., desired distance in inches)

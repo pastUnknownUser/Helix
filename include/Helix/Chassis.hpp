@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Helix/PIDController.hpp"
+#include "Helix/Odometry.hpp"
 #include "pros/motors.hpp"
 #include "pros/imu.hpp"
 
@@ -339,7 +340,14 @@ public:
      * chassis->setOdometry(&odom);
      * @endcode
      */
-    void setOdometry(Odometry* odom) { odometry_ = odom; }
+    void setOdometry(Odometry* odom);
+
+    /**
+     * @brief Set navigation configuration for point-to-point movements
+     *
+     * @param config Navigation config reference
+     */
+    void setNavConfig(const NavConfig& config) { navConfig_ = config; }
 
     /**
      * @brief Get current pose from odometry
@@ -364,6 +372,7 @@ private:
     float maxTurnSpeed_;
     int defaultTimeout_;
     Odometry* odometry_;  // Optional odometry system
+    NavConfig navConfig_;   // Navigation config for point-to-point movements
 
     /**
      * @brief Wait for a movement to complete with timeout

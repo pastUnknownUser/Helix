@@ -1,4 +1,5 @@
 #include "Helix/PIDController.hpp"
+#include <cmath>
 
 namespace Helix {
 
@@ -42,7 +43,7 @@ double PIDController::compute(double setpoint, double measurement) {
     }
 
     // Check if settled
-    if (error < 0 ? -error : error < tolerance) {
+    if (std::abs(error) < tolerance) {
         settleCount++;
     } else {
         settleCount = 0;
@@ -71,7 +72,6 @@ void PIDController::setIntegralLimit(double limit) {
 void PIDController::setTolerance(double tolerance_, int consecutiveSamples) {
     tolerance = tolerance_ < 0 ? -tolerance_ : tolerance_;
     settleRequired = consecutiveSamples;
-    settleCount = 0;
 }
 
 bool PIDController::isSettled() const {

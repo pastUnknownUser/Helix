@@ -1,48 +1,43 @@
 #include "Helix/Chassis.hpp"
 #include "Helix/Odometry.hpp"
 #include "pros/rtos.hpp"
+#include <cmath>
+#include <vector>
+
+// Define M_PI if not available (some platforms require _USE_MATH_DEFINES)
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
 
 namespace Helix {
 
+namespace {
+    // Helper to average a vector of positions
+    float averagePosition(const std::vector<double>& positions) {
+        if (positions.empty()) return 0.0f;
+        double sum = 0;
+        for (double pos : positions) {
+            sum += pos;
+        }
+        return static_cast<float>(sum / positions.size());
+    }
+}
+
 // Drivetrain implementation
 float Drivetrain::getAveragePosition() const {
-    double leftAvg = 0;
-    double rightAvg = 0;
+    if (!leftMotors || !rightMotors) return 0.0f;
 
-    if (leftMotors && leftMotors->size() > 0) {
-        for (int i = 0; i < leftMotors->size(); i++) {
-            leftAvg += (*leftMotors)[i].get_position();
-        }
-        leftAvg /= leftMotors->size();
-    }
-
-    if (rightMotors && rightMotors->size() > 0) {
-        for (int i = 0; i < rightMotors->size(); i++) {
-            rightAvg += (*rightMotors)[i].get_position();
-        }
-        rightAvg /= rightMotors->size();
-    }
+    float leftAvg = averagePosition(leftMotors->get_positions());
+    float rightAvg = averagePosition(rightMotors->get_positions());
 
     return (leftAvg + rightAvg) / 2.0f;
 }
 
 float Drivetrain::getPositionDifference() const {
-    double leftAvg = 0;
-    double rightAvg = 0;
+    if (!leftMotors || !rightMotors) return 0.0f;
 
-    if (leftMotors && leftMotors->size() > 0) {
-        for (int i = 0; i < leftMotors->size(); i++) {
-            leftAvg += (*leftMotors)[i].get_position();
-        }
-        leftAvg /= leftMotors->size();
-    }
-
-    if (rightMotors && rightMotors->size() > 0) {
-        for (int i = 0; i < rightMotors->size(); i++) {
-            rightAvg += (*rightMotors)[i].get_position();
-        }
-        rightAvg /= rightMotors->size();
-    }
+    float leftAvg = averagePosition(leftMotors->get_positions());
+    float rightAvg = averagePosition(rightMotors->get_positions());
 
     // Positive = turned right (left traveled more than right)
     return leftAvg - rightAvg;
@@ -56,8 +51,8 @@ void Drivetrain::tarePosition() const {
 // Chassis implementation
 Chassis::Chassis(const Config& config)
     : drivetrain_(config.drivetrain),
-      lateralPID_(config.lateralPID),
-      turnPID_(config.turnPID),
+      lateralPID_(config.lateralPID.kP, config.lateralPID.kI, config.lateralPID.kD),
+      turnPID_(config.turnPID.kP, config.turnPID.kI, config.turnPID.kD),
       imu_(config.imu),
       maxLateralSpeed_(config.maxLateralSpeed),
       maxTurnSpeed_(config.maxTurnSpeed),
@@ -69,6 +64,10 @@ bool Chassis::waitForSettle(PIDController& pid, int timeout) {
     const int dt = 20; // 20ms delay
 
     while (!pid.isSettled() && elapsed < timeout) {
+        // Update odometry if available to prevent stale data
+        if (odometry_) {
+            odometry_->update();
+        }
         pros::delay(dt);
         elapsed += dt;
     }
@@ -86,8 +85,6 @@ bool Chassis::drive(float distance, float maxSpeed, int timeout) {
     drivetrain_.tarePosition();
 
     // Set output limits for this movement
-    float prevMin = lateralPID_.getError(); // Save current limits
-    float prevMax = lateralPID_.getError();
     lateralPID_.setOutputLimits(-maxSpeed, maxSpeed);
 
     // Calculate target in encoder ticks
@@ -101,9 +98,11 @@ bool Chassis::drive(float distance, float maxSpeed, int timeout) {
         float currentPos = drivetrain_.getAveragePosition();
         float output = lateralPID_.compute(targetTicks, currentPos);
 
-        // Apply to both sides
-        drivetrain_.leftMotors->move(output);
-        drivetrain_.rightMotors->move(output);
+        // Apply to both sides (with null check)
+        if (drivetrain_.leftMotors && drivetrain_.rightMotors) {
+            drivetrain_.leftMotors->move(output);
+            drivetrain_.rightMotors->move(output);
+        }
 
         pros::delay(dt);
         elapsed += dt;
@@ -130,8 +129,8 @@ bool Chassis::turn(float angle, float maxSpeed, int timeout) {
     // with diameter equal to track width (assumed to be 12 inches if not specified)
     // This is a rough approximation - IMU-based turns are more accurate
     float trackWidth = 12.0f; // inches, adjust for your robot
-    float wheelCircumference = drivetrain_.wheelDiameter * 3.14159f;
-    float rotationCircumference = trackWidth * 3.14159f;
+    float wheelCircumference = drivetrain_.wheelDiameter * static_cast<float>(M_PI);
+    float rotationCircumference = trackWidth * static_cast<float>(M_PI);
     float targetTickDiff = (angle / 360.0f) * rotationCircumference * drivetrain_.ticksPerInch();
 
     // PID loop
@@ -142,9 +141,11 @@ bool Chassis::turn(float angle, float maxSpeed, int timeout) {
         float currentDiff = drivetrain_.getPositionDifference();
         float output = turnPID_.compute(targetTickDiff, currentDiff);
 
-        // Apply opposite to each side (positive = turn right)
-        drivetrain_.leftMotors->move(output);
-        drivetrain_.rightMotors->move(-output);
+        // Apply opposite to each side (positive = turn right) with null check
+        if (drivetrain_.leftMotors && drivetrain_.rightMotors) {
+            drivetrain_.leftMotors->move(output);
+            drivetrain_.rightMotors->move(-output);
+        }
 
         pros::delay(dt);
         elapsed += dt;
@@ -156,7 +157,8 @@ bool Chassis::turn(float angle, float maxSpeed, int timeout) {
 
 bool Chassis::turnTo(float heading, float maxSpeed, int timeout) {
     if (!imu_) {
-        // Fall back to encoder-based turn if no IMU
+        // Warn and fall back to encoder-based turn if no IMU
+        // In a real environment, you might want to log this
         return turn(heading, maxSpeed, timeout);
     }
 
@@ -192,11 +194,14 @@ bool Chassis::turnTo(float heading, float maxSpeed, int timeout) {
         while (error > 180) error -= 360;
         while (error < -180) error += 360;
 
-        float output = turnPID_.compute(0, -error); // Use error directly
+        // Compute output - error is the direct setpoint
+        float output = turnPID_.compute(error, 0);
 
-        // Apply opposite to each side
-        drivetrain_.leftMotors->move(output);
-        drivetrain_.rightMotors->move(-output);
+        // Apply opposite to each side with null check
+        if (drivetrain_.leftMotors && drivetrain_.rightMotors) {
+            drivetrain_.leftMotors->move(output);
+            drivetrain_.rightMotors->move(-output);
+        }
 
         pros::delay(dt);
         elapsed += dt;
@@ -268,8 +273,9 @@ bool Chassis::driveToPoint(float x, float y, float maxSpeed, int timeout) {
     lateralPID_.setOutputLimits(-maxSpeed, maxSpeed);
 
     // Create a PID for heading correction during movement
-    PIDController headingPID(1.0, 0.0, 0.1);
-    headingPID.setOutputLimits(-40, 40);  // Small heading corrections
+    PIDController headingPID(navConfig_.headingPID.kP, navConfig_.headingPID.kI, navConfig_.headingPID.kD);
+    headingPID.reset();
+    headingPID.setOutputLimits(-navConfig_.headingCorrectionLimit, navConfig_.headingCorrectionLimit);
 
     Pose target(x, y, 0);
     int elapsed = 0;
@@ -281,8 +287,8 @@ bool Chassis::driveToPoint(float x, float y, float maxSpeed, int timeout) {
         // Calculate distance to target
         float distance = current.distanceTo(target);
 
-        // Check if we've arrived
-        if (distance < 1.0f) {  // Within 1 inch
+        // Check if we've arrived (using PID settled check to avoid overshoot)
+        if (distance < navConfig_.arrivalThreshold && lateralPID_.isSettled()) {
             break;
         }
 
@@ -292,9 +298,9 @@ bool Chassis::driveToPoint(float x, float y, float maxSpeed, int timeout) {
         // Calculate heading error
         float headingError = Odometry::angleDifference(angleToTarget, current.theta);
 
-        // Compute outputs
-        float distanceOutput = lateralPID_.compute(0, -distance);  // Drive toward target
-        float headingOutput = headingPID.compute(0, -headingError);  // Turn toward target
+        // Compute outputs - target is 0 (we want error to be 0)
+        float distanceOutput = lateralPID_.compute(-distance, 0);  // Drive toward target
+        float headingOutput = headingPID.compute(-headingError, 0);  // Turn toward target
 
         // Combine: distance drives forward/back, heading steers
         int leftSpeed = (int)(distanceOutput - headingOutput);
@@ -306,7 +312,10 @@ bool Chassis::driveToPoint(float x, float y, float maxSpeed, int timeout) {
         if (rightSpeed > maxSpeed) rightSpeed = (int)maxSpeed;
         if (rightSpeed < -maxSpeed) rightSpeed = (int)-maxSpeed;
 
-        tank(leftSpeed, rightSpeed);
+        // Apply with null check
+        if (drivetrain_.leftMotors && drivetrain_.rightMotors) {
+            tank(leftSpeed, rightSpeed);
+        }
 
         pros::delay(dt);
         elapsed += dt;
@@ -329,12 +338,11 @@ bool Chassis::turnToPoint(float x, float y, float maxSpeed, int timeout) {
     // Reset PID
     turnPID_.reset();
     turnPID_.setOutputLimits(-maxSpeed, maxSpeed);
+    turnPID_.setTolerance(navConfig_.turnThreshold, navConfig_.turnSettleSamples);
 
     Pose target(x, y, 0);
     int elapsed = 0;
     const int dt = 20;
-
-    turnPID_.setTolerance(2.0, 3);  // Within 2 degrees
 
     while (!turnPID_.isSettled() && elapsed < timeout) {
         Pose current = odometry_->getPose();
@@ -345,12 +353,14 @@ bool Chassis::turnToPoint(float x, float y, float maxSpeed, int timeout) {
         // Calculate error
         float error = Odometry::angleDifference(angleToTarget, current.theta);
 
-        // Compute output
-        float output = turnPID_.compute(0, -error);
+        // Compute output - error is the direct setpoint
+        float output = turnPID_.compute(error, 0);
 
-        // Apply to motors (opposite sides for turning)
-        drivetrain_.leftMotors->move(output);
-        drivetrain_.rightMotors->move(-output);
+        // Apply to motors (opposite sides for turning) with null check
+        if (drivetrain_.leftMotors && drivetrain_.rightMotors) {
+            drivetrain_.leftMotors->move(output);
+            drivetrain_.rightMotors->move(-output);
+        }
 
         pros::delay(dt);
         elapsed += dt;
@@ -371,6 +381,10 @@ void Chassis::setPose(const Pose& pose) {
     if (odometry_) {
         odometry_->setPose(pose);
     }
+}
+
+void Chassis::setOdometry(Odometry* odom) {
+    odometry_ = odom;
 }
 
 } // namespace Helix

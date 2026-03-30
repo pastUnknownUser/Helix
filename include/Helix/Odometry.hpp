@@ -3,7 +3,13 @@
 #include "pros/imu.hpp"
 #include "pros/motors.hpp"
 #include "pros/adi.hpp"
+#include "Helix/PIDController.hpp"
 #include <cmath>
+
+// Define M_PI if not available (some platforms require _USE_MATH_DEFINES)
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
 
 namespace Helix {
 
@@ -43,7 +49,7 @@ struct Pose {
     float angleTo(const Pose& other) const {
         float dx = other.x - x;
         float dy = other.y - y;
-        float angle = std::atan2(dy, dx) * 180.0f / 3.14159f;
+        float angle = std::atan2(dy, dx) * 180.0f / static_cast<float>(M_PI);
         return angle;
     }
 };
@@ -143,24 +149,7 @@ public:
     Pose getPose() const { return currentPose; }
 
     /**
-     * @brief Set/reset the robot pose
-     *
-     * @param pose New pose to set
-     *
-     * Example:
-     * @code
-     * odom.setPose({0, 0, 90});  // Reset to origin facing +Y
-     * @endcode
-     */
-    void setPose(const Pose& pose);
-
-    /**
-     * @brief Reset just the position (keep current heading)
-     */
-    void resetPosition() { currentPose.x = 0; currentPose.y = 0; }
-
-    /**
-     * @brief Get the total distance traveled since last reset
+     * @brief Get total distance traveled
      */
     float getTotalDistance() const { return totalDistance; }
 
@@ -177,6 +166,23 @@ public:
      * @brief Normalize angle to 0-360 range
      */
     static float normalizeAngle(float angle);
+
+    /**
+     * @brief Set/reset the robot pose
+     *
+     * @param pose New pose to set
+     *
+     * Example:
+     * @code
+     * odom.setPose({0, 0, 90});  // Reset to origin facing +Y
+     * @endcode
+     */
+    void setPose(const Pose& pose);
+
+    /**
+     * @brief Reset just the position (keep current heading)
+     */
+    void resetPosition() { currentPose.x = 0; currentPose.y = 0; }
 
 private:
     Config config;
@@ -208,10 +214,21 @@ struct Waypoint {
     float x;
     float y;
     float speed;        // Target speed at this point (0-127)
-    float lookahead;      // Lookahead distance for pure pursuit (optional)
+    float lookahead;    // Lookahead distance for pure pursuit (optional)
 
     Waypoint(float xPos, float yPos, float spd = 100, float look = 12.0f)
         : x(xPos), y(yPos), speed(spd), lookahead(look) {}
+};
+
+/**
+ * @brief Configuration for point-to-point navigation
+ */
+struct NavConfig {
+    float arrivalThreshold = 1.0f;      // Distance in inches to consider arrived
+    float turnThreshold = 2.0f;          // Angle in degrees to consider facing target
+    int turnSettleSamples = 3;           // Consecutive samples within threshold
+    Helix::PIDController headingPID{1.0, 0.0, 0.1};
+    int headingCorrectionLimit = 40;    // Max heading correction output
 };
 
 } // namespace Helix

@@ -8,6 +8,7 @@
 
 #include "main.h"
 #include "Helix/Helix.hpp"
+#include <optional>
 
 // ============================================================
 // MOTOR SETUP
@@ -35,9 +36,9 @@ pros::IMU imu(19);
 // HELIX CONFIGURATION
 // ============================================================
 
-// Declare pointers - initialized in initialize()
-Helix::Chassis* chassis = nullptr;
-Helix::Odometry* odom = nullptr;
+// Optional wrappers for chassis and odometry - initialized in initialize()
+std::optional<Helix::Odometry> odom;
+std::optional<Helix::Chassis> chassis;
 
 // ============================================================
 // CONTROLLER SETUP
@@ -60,12 +61,20 @@ void initialize() {
     pros::lcd::set_text(0, "Helix PID + Odom");
     pros::lcd::set_text(1, "Calibrating IMU...");
 
-    // Calibrate IMU (takes ~2 seconds)
+    // Calibrate IMU (takes ~2 seconds) with timeout
     imu.reset();
-    while (imu.is_calibrating()) {
+    int calibrationTimeout = 0;
+    const int maxCalibrationTime = 5000; // 5 second timeout
+    while (imu.is_calibrating() && calibrationTimeout < maxCalibrationTime) {
         pros::delay(10);
+        calibrationTimeout += 10;
     }
-    pros::lcd::set_text(1, "IMU Ready!");
+
+    if (calibrationTimeout >= maxCalibrationTime) {
+        pros::lcd::set_text(1, "IMU Cal Timeout!");
+    } else {
+        pros::lcd::set_text(1, "IMU Ready!");
+    }
 
     // Set brake modes (optional)
     leftSideDrive.set_brake_modes(pros::E_MOTOR_BRAKE_HOLD);
@@ -98,8 +107,8 @@ void initialize() {
     // odomConfig.trackWidth = 12.5f;  // Distance between tracking wheels
     // odomConfig.horizontalOffset = 0.0f;  // Distance from center to horizontal wheel
 
-    // Create odometry
-    odom = new Helix::Odometry(odomConfig);
+    // Create odometry using optional (no heap allocation)
+    odom.emplace(odomConfig);
 
     // Create chassis configuration
     Helix::Chassis::Config chassisConfig;
@@ -116,11 +125,11 @@ void initialize() {
     chassisConfig.maxTurnSpeed = 80;
     chassisConfig.defaultTimeout = 2000;
 
-    // Create chassis
-    chassis = new Helix::Chassis(chassisConfig);
+    // Create chassis using optional (no heap allocation)
+    chassis.emplace(chassisConfig);
 
     // Link odometry to chassis
-    chassis->setOdometry(odom);
+    chassis->setOdometry(&*odom);
 
     pros::lcd::set_text(2, "Ready!");
 }
