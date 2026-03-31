@@ -60,8 +60,7 @@ bool MotionProfile::generate(double distance) {
     }
 
     // Distance covered during acceleration
-    double dAccel = vCruise * (t1_ + t2_ + t1_);  // Average velocity during accel
-    dAccel = vCruise * (t1_ + t2_ + t1_) - (v1 * t1_ / 3 + (vCruise - v1) * t2_ / 2 + v1 * t1_ / 3);
+    // Using triangular/S-curve area approximation
 
     // Actually compute correctly
     // Distance during phase 1: d1 = (1/6) * jMax * t1^3
@@ -70,9 +69,8 @@ bool MotionProfile::generate(double distance) {
     double velAfterT1 = 0.5 * jMax * t1_ * t1_;
     // Distance during phase 2: d2 = v1*t2 + 0.5*aMax*t2^2
     d2_ = velAfterT1 * t2_ + 0.5 * aMax * t2_ * t2_;
-    // Distance during phase 3 (mirrors phase 1)
-    d3_ = d1_ + velAfterT1 * t1_ + 0.5 * aMax * t1_ * t1_ - (1.0/6.0) * jMax * t1_ * t1_ * t1_;
-    d3_ = velAfterT1 * t1_ + 0.5 * aMax * t1_ * t1_ - (1.0/6.0) * jMax * t1_ * t1_ * t1_ + d1_;
+    // Distance during phase 3 (mirrors phase 1): d3 = velAfterT1*t1 + 0.5*aMax*t1^2 - (1/6)*jMax*t1^3
+    d3_ = velAfterT1 * t1_ + 0.5 * aMax * t1_ * t1_ - (1.0/6.0) * jMax * t1_ * t1_ * t1_;
 
     // Simplified: distance to reach cruise velocity
     double tAccelTotal = 2 * t1_ + t2_;

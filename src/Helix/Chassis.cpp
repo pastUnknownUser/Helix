@@ -370,7 +370,7 @@ bool Chassis::waitUntilSettled(int timeout) {
         // Update async motion if needed
         if (currentMotion_ != MotionType::NONE) {
             float currentTime = getCurrentTime();
-            float elapsed = currentTime - motionStartTime_;
+            float motionElapsed = currentTime - motionStartTime_;
 
             switch (currentMotion_) {
                 case MotionType::DRIVE:

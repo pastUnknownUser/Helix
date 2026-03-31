@@ -5,11 +5,6 @@
 #include <cstdint>
 #include <fstream>
 
-// Forward declaration for PROS
-namespace pros {
-    class Imu;
-}
-
 namespace Helix {
 
 /**
