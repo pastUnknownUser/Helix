@@ -32,7 +32,7 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 html_theme = "furo"
 
 html_theme_options = {
-    "source_repository": "https://github.com/lemlib/lemlib/",
+    "source_repository": "https://https://github.com/pastUnknownUser/Helix",
     "source_branch": "master",
     "source_directory": "docs/",
 
@@ -51,15 +51,15 @@ html_theme_options = {
 html_static_path = ['_static']
 
 
-breathe_projects = {"LemLib": "xml/"}
+breathe_projects = {"Helix": "xml/"}
 
 breathe_projects_source = {
-    "LemLib" : (
-        "../", ["include/lemlib", "include/lemlib/chassis"]
+    "Helix" : (
+        "../", ["include/helix", "include/helix/chassis"]
     )
 }
 
-breathe_default_project = "LemLib"
+breathe_default_project = "Helix"
 
 myst_enable_extensions = [
     "amsmath",
