@@ -3,15 +3,9 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Helix documentation
-===================
+Welcome
+=======
 
-Add your content using ``reStructuredText`` syntax. See the
-`reStructuredText <https://www.sphinx-doc.org/en/master/usage/restructuredtext/index.html>`_
-documentation for details.
+.. raw:: html
 
-
-.. toctree::
-   :maxdepth: 2
-   :caption: Contents:
-
+   <meta http-equiv="refresh" content="0; url=_static/index.html">
