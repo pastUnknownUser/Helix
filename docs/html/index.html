@@ -1,0 +1,1273 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Helix – PID Library for PROS</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root[data-theme="dark"] {
+  --bg: #1a1d23;
+  --sidebar-bg: #13151a;
+  --sidebar-border: #252830;
+  --text: #c8cdd8;
+  --text-muted: #6b7280;
+  --text-heading: #eef0f5;
+  --accent: #7c5cbf;
+  --accent2: #9b78e0;
+  --link: #9b78e0;
+  --link-hover: #bba0f5;
+  --code-bg: #0d0f14;
+  --code-border: #252830;
+  --code-text: #abb2bf;
+  --inline-code-bg: #22252e;
+  --inline-code-text: #e06c75;
+  --note-bg: #1a1f2e;
+  --note-border: #7c5cbf;
+  --note-text: #a0b4d4;
+  --tip-bg: #142318;
+  --tip-border: #27ae60;
+  --tip-text: #72d49a;
+  --warn-bg: #221a0f;
+  --warn-border: #e67e22;
+  --warn-text: #f0a060;
+  --hr: #252830;
+  --active-nav: #9b78e0;
+  --active-nav-bg: #1e1730;
+  --nav-hover: #1e2028;
+  --search-bg: #1e2028;
+  --search-border: #2e3140;
+  --scrollbar: #1e2028;
+  --scrollbar-thumb: #353848;
+  --tag-bg: #231b35;
+  --tag-text: #9b78e0;
+  --tag2-bg: #1a2635;
+  --tag2-text: #5dade2;
+  --shadow: rgba(0,0,0,0.5);
+  --table-alt: #1e2028;
+  --step-bg: #7c5cbf;
+}
+:root[data-theme="light"] {
+  --bg: #fafbfd;
+  --sidebar-bg: #f3f4f8;
+  --sidebar-border: #e0e3ec;
+  --text: #374151;
+  --text-muted: #8a96a8;
+  --text-heading: #111827;
+  --accent: #6d48c0;
+  --accent2: #7c5cbf;
+  --link: #6d48c0;
+  --link-hover: #4a2d9c;
+  --code-bg: #f5f6fa;
+  --code-border: #e0e3ec;
+  --code-text: #24292e;
+  --inline-code-bg: #ede8f8;
+  --inline-code-text: #7c2d8a;
+  --note-bg: #f0edfb;
+  --note-border: #7c5cbf;
+  --note-text: #4a3580;
+  --tip-bg: #edf7f1;
+  --tip-border: #27ae60;
+  --tip-text: #1a6b3a;
+  --warn-bg: #fdf5ed;
+  --warn-border: #e67e22;
+  --warn-text: #8a4a0a;
+  --hr: #e0e3ec;
+  --active-nav: #6d48c0;
+  --active-nav-bg: #ede8f8;
+  --nav-hover: #eceef5;
+  --search-bg: #fff;
+  --search-border: #d0d4e0;
+  --scrollbar: #eceef5;
+  --scrollbar-thumb: #c0c6d8;
+  --tag-bg: #ede8f8;
+  --tag-text: #6d48c0;
+  --tag2-bg: #dbeafe;
+  --tag2-text: #1e40af;
+  --shadow: rgba(0,0,0,0.08);
+  --table-alt: #f0eff8;
+  --step-bg: #7c5cbf;
+}
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);font-size:15px;line-height:1.75;display:flex;min-height:100vh}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:var(--scrollbar)}
+::-webkit-scrollbar-thumb{background:var(--scrollbar-thumb);border-radius:3px}
+
+/* ── Sidebar ── */
+.sidebar{width:268px;min-width:268px;background:var(--sidebar-bg);border-right:1px solid var(--sidebar-border);height:100vh;position:sticky;top:0;overflow-y:auto;display:flex;flex-direction:column;z-index:100}
+.sidebar-header{padding:18px 16px 14px;border-bottom:1px solid var(--sidebar-border)}
+.sidebar-logo{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.logo-mark{width:28px;height:28px;background:linear-gradient(135deg,#7c5cbf,#9b78e0);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#fff;flex-shrink:0}
+.sidebar-title{font-size:17px;font-weight:700;color:var(--text-heading)}
+.sidebar-sub{font-size:11px;color:var(--text-muted);margin-top:2px}
+.sidebar-version{display:inline-block;margin-top:6px;font-size:10.5px;background:var(--tag-bg);color:var(--tag-text);padding:2px 9px;border-radius:20px;font-weight:600}
+
+.search-wrap{padding:12px 14px 0}
+.search-wrap input{width:100%;background:var(--search-bg);border:1px solid var(--search-border);color:var(--text);border-radius:7px;padding:7px 12px 7px 32px;font-size:13px;font-family:inherit;outline:none;transition:border-color .2s}
+.search-wrap input:focus{border-color:var(--accent)}
+.search-wrap input::placeholder{color:var(--text-muted)}
+.search-icon{position:relative}
+.search-icon svg{position:absolute;left:10px;top:8px;color:var(--text-muted)}
+
+.nav{padding:10px 0 24px;flex:1}
+.nav-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--text-muted);padding:10px 16px 3px}
+.nav-item{display:flex;align-items:center;gap:8px;padding:5.5px 16px;font-size:13px;color:var(--text-muted);cursor:pointer;border-left:2px solid transparent;transition:all .15s;text-decoration:none;user-select:none}
+.nav-item:hover{background:var(--nav-hover);color:var(--text)}
+.nav-item.active{color:var(--active-nav);background:var(--active-nav-bg);border-left-color:var(--active-nav);font-weight:500}
+.nav-item .badge{width:19px;height:19px;background:var(--step-bg);color:#fff;border-radius:50%;font-size:9.5px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.nav-item.active .badge{background:var(--active-nav)}
+.nav-divider{height:1px;background:var(--sidebar-border);margin:8px 0}
+
+/* ── Main ── */
+.main{flex:1;display:flex;flex-direction:column;min-width:0}
+.progress-bar{height:2px;background:var(--sidebar-border)}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .4s ease}
+
+.topbar{position:sticky;top:0;z-index:90;background:var(--sidebar-bg);border-bottom:1px solid var(--sidebar-border);padding:0 40px;height:50px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.breadcrumb{font-size:12.5px;color:var(--text-muted);display:flex;align-items:center;gap:5px}
+.breadcrumb span{color:var(--text);font-weight:500}
+.topbar-right{display:flex;align-items:center;gap:8px}
+.step-counter{font-size:11.5px;color:var(--text-muted)}
+.theme-btn{background:none;border:1px solid var(--sidebar-border);color:var(--text-muted);border-radius:6px;padding:4px 10px;cursor:pointer;font-size:12px;font-family:inherit;display:flex;align-items:center;gap:5px;transition:all .15s}
+.theme-btn:hover{background:var(--nav-hover);color:var(--text)}
+
+.content{max-width:840px;padding:40px 48px 100px;width:100%}
+
+/* ── Typography ── */
+.page-title{font-size:33px;font-weight:800;color:var(--text-heading);line-height:1.2;margin-bottom:10px;letter-spacing:-.02em}
+.page-tags{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:20px}
+.tag{font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px}
+.tag-purple{background:var(--tag-bg);color:var(--tag-text)}
+.tag-blue{background:var(--tag2-bg);color:var(--tag2-text)}
+.page-lead{font-size:15.5px;color:var(--text-muted);margin-bottom:32px;border-left:3px solid var(--accent);padding-left:15px;line-height:1.7}
+
+h2{font-size:21px;font-weight:700;color:var(--text-heading);margin:40px 0 14px;display:flex;align-items:center;gap:10px}
+h2 .step-pill{font-size:11px;font-weight:700;background:var(--step-bg);color:#fff;padding:2px 10px;border-radius:20px;white-space:nowrap}
+h3{font-size:15.5px;font-weight:600;color:var(--text-heading);margin:26px 0 10px}
+p{margin-bottom:13px}
+a{color:var(--link);text-decoration:none}
+a:hover{color:var(--link-hover);text-decoration:underline}
+hr{border:none;border-top:1px solid var(--hr);margin:36px 0}
+code{font-family:'JetBrains Mono',monospace;font-size:12.5px;background:var(--inline-code-bg);color:var(--inline-code-text);padding:1px 6px;border-radius:4px}
+strong{color:var(--text-heading);font-weight:600}
+
+/* ── Code blocks ── */
+.code-block{position:relative;margin:14px 0 20px;border-radius:9px;border:1px solid var(--code-border);overflow:hidden;box-shadow:0 3px 14px var(--shadow)}
+.code-header{display:flex;align-items:center;justify-content:space-between;padding:7px 14px;background:var(--code-bg);border-bottom:1px solid var(--code-border)}
+.lang{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--accent2);font-family:'JetBrains Mono',monospace}
+.copy-btn{background:none;border:1px solid var(--code-border);color:var(--text-muted);border-radius:4px;padding:2px 8px;font-size:10.5px;cursor:pointer;font-family:inherit;transition:all .15s}
+.copy-btn:hover{color:var(--text);background:var(--nav-hover)}
+.copy-btn.ok{color:#27ae60;border-color:#27ae60}
+pre{background:var(--code-bg);padding:17px 20px;overflow-x:auto;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.7;color:var(--code-text);margin:0}
+
+/* syntax */
+.kw{color:#c678dd}.ty{color:#e5c07b}.fn{color:#61afef}.st{color:#98c379}.nm{color:#d19a66}.cm{color:#5c6370;font-style:italic}.op{color:#56b6c2}.ns{color:#e06c75}.at{color:#98c379}
+
+/* ── Admonitions ── */
+.admon{border-left:4px solid;border-radius:0 8px 8px 0;padding:13px 16px;margin:18px 0;font-size:13.5px}
+.admon strong{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px;opacity:.8}
+.admon-note{border-color:var(--note-border);background:var(--note-bg);color:var(--note-text)}
+.admon-tip{border-color:var(--tip-border);background:var(--tip-bg);color:var(--tip-text)}
+.admon-warn{border-color:var(--warn-border);background:var(--warn-bg);color:var(--warn-text)}
+
+/* ── Tables ── */
+table{width:100%;border-collapse:collapse;margin:14px 0;font-size:13.5px}
+th{background:var(--code-bg);color:var(--text-heading);font-weight:600;text-align:left;padding:9px 14px;border:1px solid var(--code-border);font-size:11.5px;text-transform:uppercase;letter-spacing:.05em}
+td{padding:9px 14px;border:1px solid var(--code-border);color:var(--text);vertical-align:top}
+tr:nth-child(even) td{background:var(--table-alt)}
+
+/* ── Nav footer ── */
+.page-nav{display:flex;justify-content:space-between;gap:14px;margin-top:48px;padding-top:28px;border-top:1px solid var(--hr)}
+.pn-btn{display:flex;flex-direction:column;gap:4px;padding:13px 16px;background:var(--sidebar-bg);border:1px solid var(--sidebar-border);border-radius:9px;cursor:pointer;font-family:inherit;color:var(--text);text-align:left;transition:all .2s;max-width:220px;flex:1}
+.pn-btn:hover{border-color:var(--accent);background:var(--active-nav-bg)}
+.pn-btn.right{text-align:right}
+.pn-label{font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--text-muted);font-weight:600}
+.pn-title{font-size:13.5px;font-weight:600;color:var(--link)}
+
+/* ── Sections ── */
+.section{display:none}.section.active{display:block}
+
+/* ── Param table ── */
+.param-table td:first-child{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--inline-code-text);white-space:nowrap}
+.param-table td:nth-child(2){font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--ty);white-space:nowrap}
+
+/* ── Home hero ── */
+.hero{background:linear-gradient(135deg,#1e1630 0%,#131520 60%,#1a1d23 100%);border:1px solid var(--sidebar-border);border-radius:12px;padding:36px 36px 32px;margin-bottom:36px}
+[data-theme="light"] .hero{background:linear-gradient(135deg,#f0edfb 0%,#eef0fb 100%);border-color:var(--sidebar-border)}
+.hero-title{font-size:40px;font-weight:900;background:linear-gradient(90deg,#9b78e0,#c4a8ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:10px;letter-spacing:-.02em}
+.hero-sub{font-size:16px;color:var(--text-muted);margin-bottom:22px}
+.hero-badges{display:flex;flex-wrap:wrap;gap:8px}
+.hero-badge{font-size:12px;font-weight:600;padding:5px 13px;border-radius:20px}
+
+/* ── Feature grid ── */
+.feature-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:20px 0}
+.feature-card{background:var(--sidebar-bg);border:1px solid var(--sidebar-border);border-radius:9px;padding:16px 18px}
+.feature-icon{font-size:20px;margin-bottom:8px}
+.feature-title{font-size:13.5px;font-weight:600;color:var(--text-heading);margin-bottom:4px}
+.feature-desc{font-size:12.5px;color:var(--text-muted);line-height:1.6}
+
+@media(max-width:720px){.sidebar{display:none}.content{padding:24px 20px 60px}.feature-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<aside class="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-logo">
+      <div class="logo-mark">H</div>
+      <div>
+        <div class="sidebar-title">Helix</div>
+        <div class="sidebar-sub">PID Library for PROS</div>
+      </div>
+    </div>
+    <span class="sidebar-version">v1.0.0 · VEX V5 · PROS</span>
+  </div>
+
+  <div class="search-wrap">
+    <div class="search-icon">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input type="text" id="searchInput" placeholder="Search docs...">
+    </div>
+  </div>
+
+  <nav class="nav">
+    <div class="nav-label">Overview</div>
+    <a class="nav-item active" onclick="go('home')">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+      Introduction
+    </a>
+
+    <div class="nav-label">Getting Started</div>
+    <a class="nav-item" onclick="go('install')">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Installation
+    </a>
+    <a class="nav-item" onclick="go('quickstart')">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+      Quick Start
+    </a>
+
+    <div class="nav-label">Configuration</div>
+    <a class="nav-item" onclick="go('motors')">
+      <span class="badge">1</span> Motors & Drivetrain
+    </a>
+    <a class="nav-item" onclick="go('chassis')">
+      <span class="badge">2</span> Chassis Config
+    </a>
+    <a class="nav-item" onclick="go('odom')">
+      <span class="badge">3</span> Odometry
+    </a>
+    <a class="nav-item" onclick="go('logger')">
+      <span class="badge">4</span> Logger & Telemetry
+    </a>
+
+    <div class="nav-label">API Reference</div>
+    <a class="nav-item" onclick="go('api-chassis')">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+      Chassis
+    </a>
+    <a class="nav-item" onclick="go('api-pid')">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      PIDController
+    </a>
+    <a class="nav-item" onclick="go('api-odom')">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="12" x2="14" y2="14"/></svg>
+      Odometry
+    </a>
+    <a class="nav-item" onclick="go('api-pidmotor')">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M2 12h4M18 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
+      PIDMotor
+    </a>
+    <a class="nav-item" onclick="go('api-motion')">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+      MotionProfile
+    </a>
+
+    <div class="nav-label">Guides</div>
+    <a class="nav-item" onclick="go('tuning')">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+      PID Tuning Guide
+    </a>
+    <a class="nav-item" onclick="go('autonomous')">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+      Autonomous Examples
+    </a>
+  </nav>
+</aside>
+
+<!-- Main -->
+<div class="main">
+  <div class="progress-bar"><div class="progress-fill" id="pbar" style="width:5%"></div></div>
+  <div class="topbar">
+    <div class="breadcrumb">Helix &rsaquo; <span id="bc">Introduction</span></div>
+    <div class="topbar-right">
+      <span class="step-counter" id="sc"></span>
+      <button class="theme-btn" onclick="toggleTheme()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" id="thIcon"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        <span id="thLabel">Light</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- ── HOME ── -->
+    <div class="section active" id="sec-home">
+      <div class="hero">
+        <div class="hero-title">Helix</div>
+        <div class="hero-sub">A configurable PID controller and chassis library for VEX V5 robots, built on the PROS framework.</div>
+        <div class="hero-badges">
+          <span class="hero-badge tag-purple">VEX V5</span>
+          <span class="hero-badge tag-blue">PROS 3+</span>
+          <span class="hero-badge tag-purple">C++17</span>
+          <span class="hero-badge tag-blue">Open Source</span>
+        </div>
+      </div>
+
+      <div class="feature-grid">
+        <div class="feature-card">
+          <div class="feature-icon">🎛️</div>
+          <div class="feature-title">PID Control</div>
+          <div class="feature-desc">Configurable kP, kI, kD with anti-windup, output clamping, and settle detection built in.</div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">📐</div>
+          <div class="feature-title">Odometry</div>
+          <div class="feature-desc">Track your robot's X, Y, and heading on the field using drive encoders, tracking wheels, and IMU.</div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">📈</div>
+          <div class="feature-title">Motion Profiling</div>
+          <div class="feature-desc">S-curve profiles limit jerk and acceleration for smooth, accurate movements without wheel slip.</div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">📡</div>
+          <div class="feature-title">Telemetry Logger</div>
+          <div class="feature-desc">Record PID states to SD card in real-time as CSV. Falls back to terminal if no SD card is present.</div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">⚡</div>
+          <div class="feature-title">Async Movements</div>
+          <div class="feature-desc">Non-blocking <code>driveAsync()</code> and <code>turnAsync()</code> let you do other work while driving.</div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🔩</div>
+          <div class="feature-title">PIDMotor</div>
+          <div class="feature-desc">Wrap any motor or motor group with PID control and optional external encoder feedback.</div>
+        </div>
+      </div>
+
+      <h2>File Structure</h2>
+      <div class="code-block">
+        <div class="code-header"><span class="lang">Project Layout</span></div>
+        <pre>include/
+└── Helix/
+    ├── Helix.hpp           <span class="cm"># Main include — pull this in</span>
+    ├── Chassis.hpp         <span class="cm"># Chassis + Drivetrain</span>
+    ├── PIDController.hpp   <span class="cm"># PID controller</span>
+    ├── Odometry.hpp        <span class="cm"># Position tracking + Pose</span>
+    ├── PIDMotor.hpp        <span class="cm"># Per-mechanism PID motor</span>
+    ├── MotionProfile.hpp   <span class="cm"># S-curve generator</span>
+    └── Logger.hpp          <span class="cm"># Telemetry logger</span>
+
+src/
+├── main.cpp
+└── Helix/
+    ├── Chassis.cpp
+    ├── PIDController.cpp
+    ├── Odometry.cpp
+    ├── PIDMotor.cpp
+    ├── MotionProfile.cpp
+    └── Logger.cpp</pre>
+      </div>
+
+      <div class="page-nav">
+        <div></div>
+        <button class="pn-btn right" onclick="go('install')">
+          <span class="pn-label">Next →</span>
+          <span class="pn-title">Installation</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- ── INSTALL ── -->
+    <div class="section" id="sec-install">
+      <div class="page-title">Installation</div>
+      <div class="page-tags"><span class="tag tag-purple">PROS CLI</span><span class="tag tag-blue">Setup</span></div>
+      <p class="page-lead">Add Helix to your PROS project by dropping the source files into the right directories. No package manager required.</p>
+
+      <h2>Step 1 — Copy Headers</h2>
+      <p>Copy the entire <code>Helix/</code> folder from <code>include/</code> into your project's <code>include/</code> directory.</p>
+      <div class="code-block">
+        <div class="code-header"><span class="lang">Bash</span><button class="copy-btn" onclick="cp(this)">Copy</button></div>
+        <pre>cp -r Helix/include/Helix your_project/include/Helix</pre>
+      </div>
+
+      <h2>Step 2 — Copy Source Files</h2>
+      <p>Copy all <code>.cpp</code> files into <code>src/Helix/</code> in your project.</p>
+      <div class="code-block">
+        <div class="code-header"><span class="lang">Bash</span><button class="copy-btn" onclick="cp(this)">Copy</button></div>
+        <pre>cp -r Helix/src/Helix your_project/src/Helix</pre>
+      </div>
+
+      <h2>Step 3 — Include in main.cpp</h2>
+      <div class="code-block">
+        <div class="code-header"><span class="lang">C++</span><button class="copy-btn" onclick="cp(this)">Copy</button></div>
+        <pre><span class="kw">#include</span> <span class="st">"Helix/Helix.hpp"</span></pre>
+      </div>
+
+      <h2>Step 4 — Build & Upload</h2>
+      <div class="code-block">
+        <div class="code-header"><span class="lang">Bash</span><button class="copy-btn" onclick="cp(this)">Copy</button></div>
+        <pre>pros build         <span class="cm"># Compile</span>
+pros upload        <span class="cm"># Upload to V5 Brain</span>
+pros terminal      <span class="cm"># View serial output</span></pre>
+      </div>
+
+      <div class="admon admon-note">
+        <strong>📋 Requirements</strong>
+        PROS 3.x or later, C++17 compiler support. The library targets VEX V5 hardware only.
+      </div>
+
+      <div class="page-nav">
+        <button class="pn-btn" onclick="go('home')"><span class="pn-label">← Previous</span><span class="pn-title">Introduction</span></button>
+        <button class="pn-btn right" onclick="go('quickstart')"><span class="pn-label">Next →</span><span class="pn-title">Quick Start</span></button>
+      </div>
+    </div>
+
+    <!-- ── QUICK START ── -->
+    <div class="section" id="sec-quickstart">
+      <div class="page-title">Quick Start</div>
+      <div class="page-tags"><span class="tag tag-purple">Tutorial</span><span class="tag tag-blue">5 min</span></div>
+      <p class="page-lead">Get a working chassis up and running in under 5 minutes with these copy-paste examples.</p>
+
+      <h2>Minimal Setup</h2>
+      <p>This is the smallest possible Helix configuration — two motor groups, a chassis, and some movements.</p>
+      <div class="code-block">
+        <div class="code-header"><span class="lang">C++ — main.cpp</span><button class="copy-btn" onclick="cp(this)">Copy</button></div>
+        <pre><span class="kw">#include</span> <span class="st">"main.h"</span>
+<span class="kw">#include</span> <span class="st">"Helix/Helix.hpp"</span>
+
+<span class="kw">using namespace</span> Helix;
+
+<span class="cm">// --- Motors ---</span>
+<span class="ns">pros</span>::<span class="ty">Motor</span> leftFront (<span class="nm">1</span>, <span class="ns">pros</span>::<span class="ty">E_MOTOR_GEAR_BLUE</span>, <span class="kw">true</span>);
+<span class="ns">pros</span>::<span class="ty">Motor</span> leftBack  (<span class="nm">2</span>, <span class="ns">pros</span>::<span class="ty">E_MOTOR_GEAR_BLUE</span>, <span class="kw">true</span>);
+<span class="ns">pros</span>::<span class="ty">Motor</span> rightFront(<span class="nm">3</span>, <span class="ns">pros</span>::<span class="ty">E_MOTOR_GEAR_BLUE</span>, <span class="kw">false</span>);
+<span class="ns">pros</span>::<span class="ty">Motor</span> rightBack (<span class="nm">4</span>, <span class="ns">pros</span>::<span class="ty">E_MOTOR_GEAR_BLUE</span>, <span class="kw">false</span>);
+
+<span class="ns">pros</span>::<span class="ty">Motor_Group</span> leftSide ({leftFront, leftBack});
+<span class="ns">pros</span>::<span class="ty">Motor_Group</span> rightSide({rightFront, rightBack});
+<span class="ns">pros</span>::<span class="ty">IMU</span> imu(<span class="nm">10</span>);
+
+<span class="cm">// --- Chassis ---</span>
+<span class="ty">Chassis</span>::<span class="ty">Config</span> cfg;
+cfg.drivetrain  = <span class="ty">Drivetrain</span>(&amp;leftSide, &amp;rightSide, <span class="nm">600</span>, <span class="nm">3.25</span>);
+cfg.lateralPID  = <span class="ty">PIDController</span>(<span class="nm">0.8</span>, <span class="nm">0.001</span>, <span class="nm">0.1</span>);
+cfg.turnPID     = <span class="ty">PIDController</span>(<span class="nm">1.5</span>, <span class="nm">0.002</span>, <span class="nm">0.15</span>);
+cfg.imu         = &amp;imu;
+cfg.maxLateralSpeed = <span class="nm">100</span>;
+cfg.maxTurnSpeed    = <span class="nm">80</span>;
+
+<span class="ty">Chassis</span> chassis(cfg);
+
+<span class="kw">void</span> <span class="fn">initialize</span>() {
+    imu.reset();
+    <span class="kw">while</span> (imu.is_calibrating()) pros::delay(<span class="nm">10</span>);
+}
+
+<span class="kw">void</span> <span class="fn">autonomous</span>() {
+    chassis.drive(<span class="nm">24</span>);     <span class="cm">// 24 inches forward</span>
+    chassis.turn(<span class="nm">90</span>);      <span class="cm">// Turn 90° right</span>
+    chassis.drive(<span class="nm">-12</span>);   <span class="cm">// 12 inches backward</span>
+    chassis.turnTo(<span class="nm">0</span>);     <span class="cm">// Face heading 0</span>
+}
+
+<span class="kw">void</span> <span class="fn">opcontrol</span>() {
+    <span class="ns">pros</span>::<span class="ty">Controller</span> ctrl(<span class="ns">pros</span>::<span class="ty">E_CONTROLLER_MASTER</span>);
+    <span class="kw">while</span> (<span class="kw">true</span>) {
+        chassis.arcade(ctrl.get_analog(<span class="ty">ANALOG_LEFT_Y</span>),
+                       ctrl.get_analog(<span class="ty">ANALOG_RIGHT_X</span>));
+        <span class="ns">pros</span>::delay(<span class="nm">20</span>);
+    }
+}</pre>
+      </div>
+
+      <div class="admon admon-tip">
+        <strong>✅ That's it!</strong>
+        This is a complete, working Helix setup. Head to the Configuration pages to add odometry, motion profiling, and telemetry logging.
+      </div>
+
+      <div class="page-nav">
+        <button class="pn-btn" onclick="go('install')"><span class="pn-label">← Previous</span><span class="pn-title">Installation</span></button>
+        <button class="pn-btn right" onclick="go('motors')"><span class="pn-label">Next →</span><span class="pn-title">Motors & Drivetrain</span></button>
+      </div>
+    </div>
+
+    <!-- ── MOTORS ── -->
+    <div class="section" id="sec-motors">
+      <div class="page-title">Motors & Drivetrain</div>
+      <div class="page-tags"><span class="tag tag-purple">Config Step 1</span><span class="tag tag-blue">Hardware</span></div>
+      <p class="page-lead">Declare your motors, group them, and build a <code>Drivetrain</code> struct that tells Helix about your robot's physical dimensions.</p>
+
+      <h2><span class="step-pill">Step 1</span> Declare Motors</h2>
+      <p>Each motor needs a port number, gear cartridge, and whether it's reversed. Find ports by going to <strong>Devices</strong> on the V5 Brain and unplugging each motor one at a time.</p>
+      <div class="code-block">
+        <div class="code-header"><span class="lang">C++</span><button class="copy-btn" onclick="cp(this)">Copy</button></div>
+        <pre><span class="cm">// Left side — reversed so positive = forward</span>
+<span class="ns">pros</span>::<span class="ty">Motor</span> leftFront (<span class="nm">11</span>, <span class="ns">pros</span>::<span class="ty">E_MOTOR_GEAR_BLUE</span>, <span class="kw">true</span>);
+<span class="ns">pros</span>::<span class="ty">Motor</span> leftMiddle(<span class="nm"> 3</span>, <span class="ns">pros</span>::<span class="ty">E_MOTOR_GEAR_BLUE</span>, <span class="kw">true</span>);
+<span class="ns">pros</span>::<span class="ty">Motor</span> leftBack  (<span class="nm"> 1</span>, <span class="ns">pros</span>::<span class="ty">E_MOTOR_GEAR_BLUE</span>, <span class="kw">true</span>);
+
+<span class="cm">// Right side — not reversed</span>
+<span class="ns">pros</span>::<span class="ty">Motor</span> rightFront(<span class="nm">17</span>, <span class="ns">pros</span>::<span class="ty">E_MOTOR_GEAR_BLUE</span>, <span class="kw">false</span>);
+<span class="ns">pros</span>::<span class="ty">Motor</span> rightMiddle(<span class="nm">10</span>, <span class="ns">pros</span>::<span class="ty">E_MOTOR_GEAR_BLUE</span>, <span class="kw">false</span>);
+<span class="ns">pros</span>::<span class="ty">Motor</span> rightBack  (<span class="nm"> 8</span>, <span class="ns">pros</span>::<span class="ty">E_MOTOR_GEAR_BLUE</span>, <span class="kw">false</span>);</pre>
+      </div>
+
+      <h3>Cartridge Reference</h3>
+      <table>
+        <tr><th>Constant</th><th>Color</th><th>RPM</th><th>Use when</th></tr>
+        <tr><td><code>E_MOTOR_GEAR_BLUE</code></td><td>Blue</td><td>600</td><td>Speed-focused drivetrain (most common)</td></tr>
+        <tr><td><code>E_MOTOR_GEAR_GREEN</code></td><td>Green</td><td>200</td><td>Torque-focused or heavy robot</td></tr>
+        <tr><td><code>E_MOTOR_GEAR_RED</code></td><td>Red</td><td>100</td><td>Very heavy or highly geared mechanisms</td></tr>
+      </table>
+
+      <h2><span class="step-pill">Step 2</span> Group Motors</h2>
+      <div class="code-block">
+        <div class="code-header"><span class="lang">C++</span><button class="copy-btn" onclick="cp(this)">Copy</button></div>
+        <pre><span class="ns">pros</span>::<span class="ty">Motor_Group</span> leftSide ({leftFront, leftMiddle, leftBack});
+<span class="ns">pros</span>::<span class="ty">Motor_Group</span> rightSide({rightFront, rightMiddle, rightBack});</pre>
+      </div>
+
+      <h2><span class="step-pill">Step 3</span> Create Drivetrain</h2>
+      <div class="code-block">
+        <div class="code-header"><span class="lang">C++</span><button class="copy-btn" onclick="cp(this)">Copy</button></div>
+        <pre><span class="ty">Helix</span>::<span class="ty">Drivetrain</span> drivetrain(
+    &amp;leftSide,    <span class="cm">// left motor group</span>
+    &amp;rightSide,   <span class="cm">// right motor group</span>
+    <span class="nm">600</span>,          <span class="cm">// RPM — must match your cartridge</span>
+    <span class="nm">3.25</span>          <span class="cm">// wheel diameter in inches</span>
+);</pre>
+      </div>
+
+      <div class="admon admon-note">
+        <strong>📏 Measuring Wheel Diameter</strong>
+        Common VEX wheel sizes: 4" omni = 4.0, 3.25" omni = 3.25, 2.75" omni = 2.75. Measure your actual wheel if it's worn — even 0.1" error compounds over distance.
+      </div>
+
+      <div class="page-nav">
+        <button class="pn-btn" onclick="go('quickstart')"><span class="pn-label">← Previous</span><span class="pn-title">Quick Start</span></button>
+        <button class="pn-btn right" onclick="go('chassis')"><span class="pn-label">Next →</span><span class="pn-title">Chassis Config</span></button>
+      </div>
+    </div>
+
+    <!-- ── CHASSIS CONFIG ── -->
+    <div class="section" id="sec-chassis">
+      <div class="page-title">Chassis Configuration</div>
+      <div class="page-tags"><span class="tag tag-purple">Config Step 2</span><span class="tag tag-blue">PID</span></div>
+      <p class="page-lead">Build a <code>Chassis::Config</code> struct to wire together your drivetrain, PID controllers, and advanced features like motion profiling and feedforward.</p>
+
+      <h2>Basic Config</h2>
+      <div class="code-block">
+        <div class="code-header"><span class="lang">C++</span><button class="copy-btn" onclick="cp(this)">Copy</button></div>
+        <pre><span class="ty">Helix</span>::<span class="ty">Chassis</span>::<span class="ty">Config</span> cfg;
+
+cfg.drivetrain      = drivetrain;
+cfg.lateralPID      = <span class="ty">PIDController</span>(<span class="nm">0.8</span>, <span class="nm">0.001</span>, <span class="nm">0.1</span>);
+cfg.turnPID         = <span class="ty">PIDController</span>(<span class="nm">1.5</span>, <span class="nm">0.002</span>, <span class="nm">0.15</span>);
+cfg.imu             = &amp;imu;        <span class="cm">// Optional</span>
+cfg.maxLateralSpeed = <span class="nm">100</span>;
+cfg.maxTurnSpeed    = <span class="nm">80</span>;
+cfg.defaultTimeout  = <span class="nm">3000</span>;       <span class="cm">// ms</span>
+
+<span class="ty">Helix</span>::<span class="ty">Chassis</span> chassis(cfg);</pre>
+      </div>
+
+      <h2>Config Fields Reference</h2>
+      <table>
+        <tr><th>Field</th><th>Type</th><th>Default</th><th>Description</th></tr>
+        <tr><td><code>drivetrain</code></td><td>Drivetrain</td><td>—</td><td>Motor groups + physical params</td></tr>
+        <tr><td><code>lateralPID</code></td><td>PIDController</td><td>BALANCED preset</td><td>Forward/backward PID gains</td></tr>
+        <tr><td><code>turnPID</code></td><td>PIDController</td><td>1.5, 0.002, 0.15</td><td>Turning PID gains</td></tr>
+        <tr><td><code>imu</code></td><td>pros::IMU*</td><td>nullptr</td><td>IMU for heading-based turns</td></tr>
+        <tr><td><code>maxLateralSpeed</code></td><td>float</td><td>127</td><td>Drive speed limit (0–127)</td></tr>
+        <tr><td><code>maxTurnSpeed</code></td><td>float</td><td>127</td><td>Turn speed limit (0–127)</td></tr>
+        <tr><td><code>defaultTimeout</code></td><td>int</td><td>2000</td><td>Movement timeout (ms)</td></tr>
+        <tr><td><code>useMotionProfile</code></td><td>bool</td><td>false</td><td>Enable S-curve profiling</td></tr>
+        <tr><td><code>maxJerk</code></td><td>double</td><td>40.0</td><td>Jerk limit for S-curve (units/s³)</td></tr>
+        <tr><td><code>maxAcceleration</code></td><td>double</td><td>16.0</td><td>Accel limit for S-curve (units/s²)</td></tr>
+        <tr><td><code>maxVelocity</code></td><td>double</td><td>60.0</td><td>Velocity limit for S-curve (units/s)</td></tr>
+        <tr><td><code>slewRate</code></td><td>double</td><td>0.0</td><td>Slew rate limit (volts/s, 0 = off)</td></tr>
+        <tr><td><code>lateralkV / kA / kS</code></td><td>double</td><td>0.0</td><td>Lateral feedforward gains</td></tr>
+        <tr><td><code>turnkV / kA / kS</code></td><td>double</td><td>0.0</td><td>Turn feedforward gains</td></tr>
+      </table>
+
+      <h2>Motion Profiling (Optional)</h2>
+      <p>Enable S-curve profiling for smooth acceleration that reduces wheel slip.</p>
+      <div class="code-block">
+        <div class="code-header"><span class="lang">C++</span><button class="copy-btn" onclick="cp(this)">Copy</button></div>
+        <pre>cfg.useMotionProfile = <span class="kw">true</span>;
+cfg.maxJerk          = <span class="nm">40.0</span>;   <span class="cm">// Higher = smoother transitions</span>
+cfg.maxAcceleration  = <span class="nm">16.0</span>;   <span class="cm">// How fast you speed up</span>
+cfg.maxVelocity      = <span class="nm">60.0</span>;   <span class="cm">// Top speed</span></pre>
+      </div>
+
+      <h2>Feedforward (Optional)</h2>
+      <p>Feedforward adds voltage based on the desired velocity and acceleration from the motion profile, reducing the load on the PID controller.</p>
+      <div class="code-block">
+        <div class="code-header"><span class="lang">C++</span><button class="copy-btn" onclick="cp(this)">Copy</button></div>
+        <pre><span class="cm">// output = kV*vel + kA*accel + kS*sign(vel)</span>
+cfg.lateralkV = <span class="nm">0.12</span>;   <span class="cm">// Velocity feedforward</span>
+cfg.lateralkA = <span class="nm">0.002</span>;  <span class="cm">// Acceleration feedforward</span>
+cfg.lateralkS = <span class="nm">3.0</span>;    <span class="cm">// Static friction offset</span>
+cfg.turnkV    = <span class="nm">0.08</span>;
+cfg.turnkA    = <span class="nm">0.001</span>;
+cfg.turnkS    = <span class="nm">2.0</span>;</pre>
+      </div>
+
+      <div class="admon admon-warn">
+        <strong>⚠️ Start with feedforward at 0</strong>
+        Tune your PID first with all feedforward values at 0. Only add feedforward once your basic PID is working.
+      </div>
+
+      <div class="page-nav">
+        <button class="pn-btn" onclick="go('motors')"><span class="pn-label">← Previous</span><span class="pn-title">Motors & Drivetrain</span></button>
+        <button class="pn-btn right" onclick="go('odom')"><span class="pn-label">Next →</span><span class="pn-title">Odometry</span></button>
+      </div>
+    </div>
+
+    <!-- ── ODOMETRY ── -->
+    <div class="section" id="sec-odom">
+      <div class="page-title">Odometry</div>
+      <div class="page-tags"><span class="tag tag-purple">Config Step 3</span><span class="tag tag-blue">Position Tracking</span></div>
+      <p class="page-lead">Track your robot's (X, Y, θ) position on the field using encoders and an IMU. Required for <code>driveToPoint()</code> and <code>turnToPoint()</code>.</p>
+
+      <h2>Basic Setup (Motor Encoders + IMU)</h2>
+      <div class="code-block">
+        <div class="code-header"><span class="lang">C++</span><button class="copy-btn" onclick="cp(this)">Copy</button></div>
+        <pre><span class="ty">Helix</span>::<span class="ty">Odometry</span>::<span class="ty">Config</span> oCfg;
+oCfg.leftMotors   = &amp;leftSide;
+oCfg.rightMotors  = &amp;rightSide;
+oCfg.imu          = &amp;imu;
+oCfg.wheelDiameter = <span class="nm">3.25</span>f;
+oCfg.trackWidth    = <span class="nm">12.0</span>f;   <span class="cm">// Distance between wheels (inches)</span>
+
+<span class="ty">Helix</span>::<span class="ty">Odometry</span>* odom = <span class="kw">new</span> <span class="ty">Helix</span>::<span class="ty">Odometry</span>(oCfg);
+chassis.setOdometry(odom);</pre>
+      </div>
+
+      <h2>With External Tracking Wheels</h2>
+      <p>External (passive) tracking wheels are more accurate than motor encoders because they don't slip under load.</p>
+      <div class="code-block">
+        <div class="code-header"><span class="lang">C++</span><button class="copy-btn" onclick="cp(this)">Copy</button></div>
+        <pre><span class="ns">pros</span>::<span class="ty">ADIEncoder</span> leftEnc (<span class="st">'A'</span>, <span class="st">'B'</span>, <span class="kw">false</span>);
+<span class="ns">pros</span>::<span class="ty">ADIEncoder</span> rightEnc(<span class="st">'C'</span>, <span class="st">'D'</span>, <span class="kw">false</span>);
+<span class="ns">pros</span>::<span class="ty">ADIEncoder</span> horizEnc(<span class="st">'E'</span>, <span class="st">'F'</span>, <span class="kw">false</span>);
+
+<span class="ty">Helix</span>::<span class="ty">Odometry</span>::<span class="ty">Config</span> oCfg;
+oCfg.leftMotors        = &amp;leftSide;
+oCfg.rightMotors       = &amp;rightSide;
+oCfg.leftEncoder       = &amp;leftEnc;     <span class="cm">// Overrides motor encoders</span>
+oCfg.rightEncoder      = &amp;rightEnc;
+oCfg.horizontalEncoder = &amp;horizEnc;   <span class="cm">// Side-to-side tracking</span>
+oCfg.horizontalOffset  = <span class="nm">-5.75</span>f;    <span class="cm">// Inches from center</span>
+oCfg.imu               = &amp;imu;
+oCfg.wheelDiameter     = <span class="nm">3.25</span>f;</pre>
+      </div>
+
+      <h2>Using Odometry</h2>
+      <div class="code-block">
+        <div class="code-header"><span class="lang">C++</span><button class="copy-btn" onclick="cp(this)">Copy</button></div>
+        <pre><span class="cm">// Reset pose at start of autonomous</span>
+odom->setPose(<span class="ty">Helix</span>::<span class="ty">Pose</span>(<span class="nm">0</span>, <span class="nm">0</span>, <span class="nm">90</span>));   <span class="cm">// x, y, heading</span>
+
+<span class="cm">// Call update() every loop tick</span>
+<span class="kw">void</span> <span class="fn">opcontrol</span>() {
+    <span class="kw">while</span> (<span class="kw">true</span>) {
+        odom->update();
+        <span class="ty">Helix</span>::<span class="ty">Pose</span> pose = odom->getPose();
+        <span class="ns">pros</span>::lcd::<span class="fn">print</span>(<span class="nm">0</span>, <span class="st">"X:%.1f Y:%.1f H:%.1f"</span>,
+                        pose.x, pose.y, pose.theta);
+        <span class="ns">pros</span>::delay(<span class="nm">20</span>);
+    }
+}</pre>
+      </div>
+
+      <h2>Odometry Config Fields</h2>
+      <table>
+        <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+        <tr><td><code>leftMotors</code></td><td>Motor_Group*</td><td>Left drive motors (fallback encoders)</td></tr>
+        <tr><td><code>rightMotors</code></td><td>Motor_Group*</td><td>Right drive motors (fallback encoders)</td></tr>
+        <tr><td><code>leftEncoder</code></td><td>ADIEncoder*</td><td>Left tracking wheel (optional)</td></tr>
+        <tr><td><code>rightEncoder</code></td><td>ADIEncoder*</td><td>Right tracking wheel (optional)</td></tr>
+        <tr><td><code>horizontalEncoder</code></td><td>ADIEncoder*</td><td>Side tracking wheel (optional)</td></tr>
+        <tr><td><code>imu</code></td><td>pros::IMU*</td><td>Inertial sensor for heading</td></tr>
+        <tr><td><code>wheelDiameter</code></td><td>float</td><td>Drive wheel diameter (inches)</td></tr>
+        <tr><td><code>trackWidth</code></td><td>float</td><td>Left-to-right wheel distance (inches)</td></tr>
+        <tr><td><code>horizontalOffset</code></td><td>float</td><td>Offset of horizontal wheel from center</td></tr>
+      </table>
+
+      <div class="page-nav">
+        <button class="pn-btn" onclick="go('chassis')"><span class="pn-label">← Previous</span><span class="pn-title">Chassis Config</span></button>
+        <button class="pn-btn right" onclick="go('logger')"><span class="pn-label">Next →</span><span class="pn-title">Logger & Telemetry</span></button>
+      </div>
+    </div>
+
+    <!-- ── LOGGER ── -->
+    <div class="section" id="sec-logger">
+      <div class="page-title">Logger & Telemetry</div>
+      <div class="page-tags"><span class="tag tag-purple">Config Step 4</span><span class="tag tag-blue">SD Card</span></div>
+      <p class="page-lead">Record PID states, motor outputs, and odometry data to CSV for post-match analysis. Automatically writes to SD card when available, falls back to serial.</p>
+
+      <h2>Basic Usage</h2>
+      <div class="code-block">
+        <div class="code-header"><span class="lang">C++</span><button class="copy-btn" onclick="cp(this)">Copy</button></div>
+        <pre><span class="ty">Helix</span>::<span class="ty">Logger</span> logger;
+
+<span class="kw">void</span> <span class="fn">initialize</span>() {
+    logger.setLevel(<span class="ty">Helix</span>::<span class="ty">LogLevel</span>::INFO);
+    logger.initSDCard();           <span class="cm">// Check for SD card</span>
+    logger.info(<span class="st">"System ready"</span>);
+}
+
+<span class="kw">void</span> <span class="fn">autonomous</span>() {
+    logger.startRecording();       <span class="cm">// Begin CSV capture</span>
+    <span class="cm">// ... run movements ...</span>
+    logger.stopRecording();        <span class="cm">// Flush & close file</span>
+}</pre>
+      </div>
+
+      <h2>Log Levels</h2>
+      <table>
+        <tr><th>Level</th><th>Constant</th><th>Use for</th></tr>
+        <tr><td>DEBUG</td><td><code>LogLevel::DEBUG</code></td><td>Verbose tuning data</td></tr>
+        <tr><td>INFO</td><td><code>LogLevel::INFO</code></td><td>General status messages</td></tr>
+        <tr><td>WARN</td><td><code>LogLevel::WARN</code></td><td>Non-fatal issues</td></tr>
+        <tr><td>ERROR</td><td><code>LogLevel::ERROR</code></td><td>Failures that affect operation</td></tr>
+      </table>
+
+      <h2>Recorded CSV Columns</h2>
+      <div class="code-block">
+        <div class="code-header"><span class="lang">CSV Header</span></div>
+        <pre>timestamp, target, current, error, output, velocity,
+leftMotor, rightMotor, x, y, theta</pre>
+      </div>
+
+      <h2>SD Card Behavior</h2>
+      <p>Helix writes to <code>/usd/log_XXXXX.csv</code> on the SD card. If no SD card is inserted, data is buffered in memory (up to 1000 samples) and can be dumped to serial.</p>
+      <div class="code-block">
+        <div class="code-header"><span class="lang">C++</span><button class="copy-btn" onclick="cp(this)">Copy</button></div>
+        <pre><span class="cm">// Dump buffered data to serial (if no SD card)</span>
+logger.dumpMotionData();
+
+<span class="cm">// Save buffered data to a specific file</span>
+logger.saveToSDCard(<span class="st">"my_run.csv"</span>);
+
+<span class="cm">// Check how many samples were recorded</span>
+<span class="ty">size_t</span> count = logger.getMotionSampleCount();</pre>
+      </div>
+
+      <div class="admon admon-tip">
+        <strong>💡 SD Card Tip</strong>
+        Files are named by timestamp: <code>log_00042.csv</code>. Use a spreadsheet to plot the <code>target</code> vs <code>current</code> columns to visualize your PID response.
+      </div>
+
+      <div class="page-nav">
+        <button class="pn-btn" onclick="go('odom')"><span class="pn-label">← Previous</span><span class="pn-title">Odometry</span></button>
+        <button class="pn-btn right" onclick="go('api-chassis')"><span class="pn-label">Next →</span><span class="pn-title">Chassis API</span></button>
+      </div>
+    </div>
+
+    <!-- ── API CHASSIS ── -->
+    <div class="section" id="sec-api-chassis">
+      <div class="page-title">Chassis API</div>
+      <div class="page-tags"><span class="tag tag-purple">Reference</span></div>
+      <p class="page-lead">Complete method reference for <code>Helix::Chassis</code>.</p>
+
+      <h2>Movement — Blocking</h2>
+      <table class="param-table">
+        <tr><th>Method</th><th>Returns</th><th>Description</th></tr>
+        <tr><td><code>drive(dist, speed, timeout)</code></td><td>bool</td><td>Drive inches forward/backward. Returns <code>true</code> if settled.</td></tr>
+        <tr><td><code>turn(angle, speed, timeout)</code></td><td>bool</td><td>Turn relative degrees. Positive = right.</td></tr>
+        <tr><td><code>turnTo(heading, speed, timeout)</code></td><td>bool</td><td>Turn to absolute heading (requires IMU).</td></tr>
+        <tr><td><code>driveToPoint(x, y, speed, timeout)</code></td><td>bool</td><td>Navigate to field coordinates (requires Odometry).</td></tr>
+        <tr><td><code>turnToPoint(x, y, speed, timeout)</code></td><td>bool</td><td>Face a field coordinate (requires Odometry).</td></tr>
+      </table>
+
+      <h2>Movement — Non-blocking (Async)</h2>
+      <table class="param-table">
+        <tr><th>Method</th><th>Description</th></tr>
+        <tr><td><code>driveAsync(dist, speed, timeout)</code></td><td>Start driving without blocking. Use <code>waitUntilSettled()</code> to block later.</td></tr>
+        <tr><td><code>turnAsync(angle, speed, timeout)</code></td><td>Start turning without blocking.</td></tr>
+        <tr><td><code>turnToAsync(heading, speed, timeout)</code></td><td>Start heading turn without blocking.</td></tr>
+        <tr><td><code>isSettled()</code></td><td>Returns <code>true</code> if no motion in progress or motion complete.</td></tr>
+        <tr><td><code>waitUntilSettled(timeout)</code></td><td>Block until current motion finishes or times out.</td></tr>
+        <tr><td><code>stopMotion()</code></td><td>Cancel any in-progress motion.</td></tr>
+      </table>
+
+      <h2>Driver Control</h2>
+      <div class="code-block">
+        <div class="code-header"><span class="lang">C++</span><button class="copy-btn" onclick="cp(this)">Copy</button></div>
+        <pre><span class="cm">// Tank drive</span>
+chassis.tank(leftJoystick, rightJoystick);
+
+<span class="cm">// Arcade drive</span>
+chassis.arcade(forwardInput, turnInput);
+
+<span class="cm">// Stop and hold position</span>
+chassis.stop();
+
+<span class="cm">// Stop and coast</span>
+chassis.stop(<span class="ns">pros</span>::<span class="ty">E_MOTOR_BRAKE_COAST</span>);</pre>
+      </div>
+
+      <h2>Odometry & Pose</h2>
+      <div class="code-block">
+        <div class="code-header"><span class="lang">C++</span><button class="copy-btn" onclick="cp(this)">Copy</button></div>
+        <pre>chassis.setOdometry(&amp;odom);
+
+<span class="ty">Helix</span>::<span class="ty">Pose</span> p = chassis.getPose();    <span class="cm">// Get current pose</span>
+chassis.setPose(<span class="ty">Pose</span>(<span class="nm">0</span>, <span class="nm">0</span>, <span class="nm">90</span>));       <span class="cm">// Set pose</span></pre>
+      </div>
+
+      <h2>Runtime PID Tuning</h2>
+      <div class="code-block">
+        <div class="code-header"><span class="lang">C++</span><button class="copy-btn" onclick="cp(this)">Copy</button></div>
+        <pre>chassis.getLateralPID().kP = <span class="nm">1.2</span>;
+chassis.getLateralPID().setOutputLimits(<span class="nm">-100</span>, <span class="nm">100</span>);
+chassis.getLateralPID().setTolerance(<span class="nm">0.5</span>, <span class="nm">5</span>);  <span class="cm">// 0.5" for 5 samples</span>
+
+chassis.getTurnPID().kD = <span class="nm">0.2</span>;</pre>
+      </div>
+
+      <div class="page-nav">
+        <button class="pn-btn" onclick="go('logger')"><span class="pn-label">← Previous</span><span class="pn-title">Logger & Telemetry</span></button>
+        <button class="pn-btn right" onclick="go('api-pid')"><span class="pn-label">Next →</span><span class="pn-title">PIDController API</span></button>
+      </div>
+    </div>
+
+    <!-- ── API PID ── -->
+    <div class="section" id="sec-api-pid">
+      <div class="page-title">PIDController API</div>
+      <div class="page-tags"><span class="tag tag-purple">Reference</span></div>
+      <p class="page-lead">Complete reference for <code>Helix::PIDController</code>. Can be used standalone or embedded inside Chassis and PIDMotor.</p>
+
+      <h2>Constructor</h2>
+      <div class="code-block">
+        <div class="code-header"><span class="lang">C++</span><button class="copy-btn" onclick="cp(this)">Copy</button></div>
+        <pre><span class="ty">PIDController</span>(
+    <span class="kw">double</span> kP,        <span class="cm">// Proportional gain</span>
+    <span class="kw">double</span> kI,        <span class="cm">// Integral gain (start at 0)</span>
+    <span class="kw">double</span> kD,        <span class="cm">// Derivative gain</span>
+    <span class="kw">double</span> dt = <span class="nm">0.02</span>  <span class="cm">// Timestep in seconds (default 20ms)</span>
+);</pre>
+      </div>
+
+      <h2>Methods</h2>
+      <table class="param-table">
+        <tr><th>Method</th><th>Returns</th><th>Description</th></tr>
+        <tr><td><code>compute(setpoint, measurement)</code></td><td>double</td><td>Calculate PID output for this timestep. Call every 20ms.</td></tr>
+        <tr><td><code>reset()</code></td><td>void</td><td>Clear integral and previous error. Call before new movement.</td></tr>
+        <tr><td><code>setOutputLimits(min, max)</code></td><td>void</td><td>Clamp output to [-127, 127] range by default.</td></tr>
+        <tr><td><code>setIntegralLimit(limit)</code></td><td>void</td><td>Anti-windup: cap integral accumulation.</td></tr>
+        <tr><td><code>setTolerance(tol, samples)</code></td><td>void</td><td>Set settle detection threshold and sample count.</td></tr>
+        <tr><td><code>isSettled()</code></td><td>bool</td><td>Returns true if within tolerance for required consecutive samples.</td></tr>
+        <tr><td><code>getError()</code></td><td>double</td><td>Current error (setpoint - measurement).</td></tr>
+        <tr><td><code>getIntegral()</code></td><td>double</td><td>Accumulated integral term (useful for debugging windup).</td></tr>
+        <tr><td><code>getDerivative()</code></td><td>double</td><td>Current derivative (computed on measurement to avoid kick).</td></tr>
+      </table>
+
+      <h2>Preset Configs</h2>
+      <div class="code-block">
+        <div class="code-header"><span class="lang">C++</span><button class="copy-btn" onclick="cp(this)">Copy</button></div>
+        <pre><span class="cm">// Precise — slow but accurate</span>
+<span class="ty">PIDController</span> pid = <span class="ns">Helix</span>::<span class="ns">PIDConfigs</span>::PRECISE;    <span class="cm">// 0.5, 0.0005, 0.05</span>
+
+<span class="cm">// Balanced — good starting point</span>
+<span class="ty">PIDController</span> pid = <span class="ns">Helix</span>::<span class="ns">PIDConfigs</span>::BALANCED;   <span class="cm">// 0.8, 0.001, 0.1</span>
+
+<span class="cm">// Fast — aggressive, may overshoot</span>
+<span class="ty">PIDController</span> pid = <span class="ns">Helix</span>::<span class="ns">PIDConfigs</span>::FAST;       <span class="cm">// 1.2, 0.001, 0.15</span></pre>
+      </div>
+
+      <div class="admon admon-note">
+        <strong>📝 Derivative on Measurement</strong>
+        Helix computes the derivative on <em>measurement</em> (not error) to avoid "derivative kick" when the setpoint changes suddenly. This means kD always dampens, never amplifies.
+      </div>
+
+      <div class="page-nav">
+        <button class="pn-btn" onclick="go('api-chassis')"><span class="pn-label">← Previous</span><span class="pn-title">Chassis API</span></button>
+        <button class="pn-btn right" onclick="go('api-odom')"><span class="pn-label">Next →</span><span class="pn-title">Odometry API</span></button>
+      </div>
+    </div>
+
+    <!-- ── API ODOM ── -->
+    <div class="section" id="sec-api-odom">
+      <div class="page-title">Odometry API</div>
+      <div class="page-tags"><span class="tag tag-purple">Reference</span></div>
+      <p class="page-lead">Reference for <code>Helix::Odometry</code> and the <code>Pose</code> struct.</p>
+
+      <h2>Pose Struct</h2>
+      <div class="code-block">
+        <div class="code-header"><span class="lang">C++</span><button class="copy-btn" onclick="cp(this)">Copy</button></div>
+        <pre><span class="kw">struct</span> <span class="ty">Pose</span> {
+    <span class="kw">float</span> x;      <span class="cm">// Field X in inches</span>
+    <span class="kw">float</span> y;      <span class="cm">// Field Y in inches</span>
+    <span class="kw">float</span> theta;  <span class="cm">// Heading in degrees (0 = +X, CW positive)</span>
+
+    <span class="kw">float</span> <span class="fn">distanceTo</span>(<span class="kw">const</span> <span class="ty">Pose</span>&amp; other) <span class="kw">const</span>;
+    <span class="kw">float</span> <span class="fn">angleTo</span>(<span class="kw">const</span> <span class="ty">Pose</span>&amp; other) <span class="kw">const</span>;
+};</pre>
+      </div>
+
+      <h2>Odometry Methods</h2>
+      <table class="param-table">
+        <tr><th>Method</th><th>Returns</th><th>Description</th></tr>
+        <tr><td><code>update()</code></td><td>void</td><td>Recalculate position from encoder deltas. Call every 20ms.</td></tr>
+        <tr><td><code>getPose()</code></td><td>Pose</td><td>Get current (x, y, theta).</td></tr>
+        <tr><td><code>setPose(pose)</code></td><td>void</td><td>Override current pose and tare encoders.</td></tr>
+        <tr><td><code>getTotalDistance()</code></td><td>float</td><td>Total distance traveled since last reset (inches).</td></tr>
+        <tr><td><code>resetPosition()</code></td><td>void</td><td>Zero x and y, keep current heading.</td></tr>
+        <tr><td><code>angleDifference(a, b)</code></td><td>float</td><td>Static. Shortest angular path from b to a (-180 to 180).</td></tr>
+        <tr><td><code>normalizeAngle(a)</code></td><td>float</td><td>Static. Wrap angle to 0–360 range.</td></tr>
+      </table>
+
+      <div class="page-nav">
+        <button class="pn-btn" onclick="go('api-pid')"><span class="pn-label">← Previous</span><span class="pn-title">PIDController API</span></button>
+        <button class="pn-btn right" onclick="go('api-pidmotor')"><span class="pn-label">Next →</span><span class="pn-title">PIDMotor API</span></button>
+      </div>
+    </div>
+
+    <!-- ── API PIDMOTOR ── -->
+    <div class="section" id="sec-api-pidmotor">
+      <div class="page-title">PIDMotor API</div>
+      <div class="page-tags"><span class="tag tag-purple">Reference</span></div>
+      <p class="page-lead">Wrap any motor or motor group with background PID control for mechanisms like arms, lifts, and turrets.</p>
+
+      <h2>Constructors</h2>
+      <div class="code-block">
+        <div class="code-header"><span class="lang">C++</span><button class="copy-btn" onclick="cp(this)">Copy</button></div>
+        <pre><span class="cm">// Single motor — uses motor internal encoder</span>
+<span class="ty">PIDMotor</span>(&amp;motor, pid, gearRatio = <span class="nm">1.0</span>f);
+
+<span class="cm">// Motor group — averages encoder positions</span>
+<span class="ty">PIDMotor</span>(&amp;motors, pid, gearRatio = <span class="nm">1.0</span>f);
+
+<span class="cm">// With external ADI encoder</span>
+<span class="ty">PIDMotor</span>(&amp;motor, pid, &amp;encoder, ticksPerRevolution, gearRatio = <span class="nm">1.0</span>f);
+<span class="ty">PIDMotor</span>(&amp;motors, pid, &amp;encoder, ticksPerRevolution, gearRatio = <span class="nm">1.0</span>f);</pre>
+      </div>
+
+      <h2>Methods</h2>
+      <table class="param-table">
+        <tr><th>Method</th><th>Returns</th><th>Description</th></tr>
+        <tr><td><code>setPID(target)</code></td><td>void</td><td>Move to absolute position in degrees (non-blocking, runs in background task).</td></tr>
+        <tr><td><code>setPIDRelative(delta)</code></td><td>void</td><td>Move relative to current position.</td></tr>
+        <tr><td><code>waitUntilSettled(timeout)</code></td><td>bool</td><td>Block until PID settles or times out.</td></tr>
+        <tr><td><code>isSettled()</code></td><td>bool</td><td>Check settle state without blocking.</td></tr>
+        <tr><td><code>getPosition()</code></td><td>float</td><td>Current position in degrees (after gear ratio).</td></tr>
+        <tr><td><code>getTarget()</code></td><td>float</td><td>Current target position.</td></tr>
+        <tr><td><code>tarePosition()</code></td><td>void</td><td>Zero the encoder.</td></tr>
+        <tr><td><code>stop(brakeMode)</code></td><td>void</td><td>Stop the motor. Default: HOLD.</td></tr>
+        <tr><td><code>move(voltage)</code></td><td>void</td><td>Direct voltage control — bypasses PID.</td></tr>
+        <tr><td><code>setOutputLimits(min, max)</code></td><td>void</td><td>Clamp PID output range.</td></tr>
+        <tr><td><code>setTolerance(tol, samples)</code></td><td>void</td><td>Configure settle detection.</td></tr>
+        <tr><td><code>getPID()</code></td><td>PIDController&</td><td>Get PID reference for live tuning.</td></tr>
+      </table>
+
+      <h2>Example — Arm Control</h2>
+      <div class="code-block">
+        <div class="code-header"><span class="lang">C++</span><button class="copy-btn" onclick="cp(this)">Copy</button></div>
+        <pre><span class="ns">pros</span>::<span class="ty">Motor</span> armMotor(<span class="nm">5</span>, <span class="ns">pros</span>::<span class="ty">E_MOTOR_GEAR_GREEN</span>, <span class="kw">false</span>);
+<span class="ty">Helix</span>::<span class="ty">PIDMotor</span> arm(&amp;armMotor, <span class="ty">Helix</span>::<span class="ty">PIDController</span>(<span class="nm">0.5</span>, <span class="nm">0.001</span>, <span class="nm">0.1</span>));
+
+<span class="kw">void</span> <span class="fn">autonomous</span>() {
+    arm.setPID(<span class="nm">90</span>);                  <span class="cm">// Move to 90°</span>
+    arm.waitUntilSettled();           <span class="cm">// Block until done</span>
+
+    arm.setPIDRelative(<span class="nm">45</span>);          <span class="cm">// Move +45° more</span>
+    <span class="kw">if</span> (arm.waitUntilSettled(<span class="nm">2000</span>)) {
+        <span class="cm">// Settled within 2 seconds</span>
+    }
+}</pre>
+      </div>
+
+      <h2>Mechanism Presets</h2>
+      <div class="code-block">
+        <div class="code-header"><span class="lang">C++</span><button class="copy-btn" onclick="cp(this)">Copy</button></div>
+        <pre><span class="cm">// All available in Helix::PIDMotorConfigs::</span>
+ARM     <span class="cm">// 0.5, 0.0005, 0.1  — precise, minimal overshoot</span>
+INTAKE  <span class="cm">// 1.2, 0.002, 0.15  — fast, may overshoot</span>
+LIFT    <span class="cm">// 0.8, 0.001, 0.1   — balanced</span>
+TURRET  <span class="cm">// 0.3, 0.0001, 0.05 — slow, very precise</span></pre>
+      </div>
+
+      <div class="page-nav">
+        <button class="pn-btn" onclick="go('api-odom')"><span class="pn-label">← Previous</span><span class="pn-title">Odometry API</span></button>
+        <button class="pn-btn right" onclick="go('api-motion')"><span class="pn-label">Next →</span><span class="pn-title">MotionProfile API</span></button>
+      </div>
+    </div>
+
+    <!-- ── API MOTION ── -->
+    <div class="section" id="sec-api-motion">
+      <div class="page-title">MotionProfile API</div>
+      <div class="page-tags"><span class="tag tag-purple">Reference</span></div>
+      <p class="page-lead">Generate smooth S-curve trajectories that limit jerk, acceleration, and velocity to reduce wheel slip and overshoot.</p>
+
+      <h2>The 7 Phases</h2>
+      <p>An S-curve profile breaks motion into seven phases to transition through acceleration smoothly:</p>
+      <table>
+        <tr><th>Phase</th><th>Jerk</th><th>Description</th></tr>
+        <tr><td>1</td><td>+J</td><td>Increasing acceleration</td></tr>
+        <tr><td>2</td><td>0</td><td>Constant max acceleration</td></tr>
+        <tr><td>3</td><td>−J</td><td>Decreasing acceleration (approaching cruise)</td></tr>
+        <tr><td>4</td><td>0</td><td>Cruise at max velocity</td></tr>
+        <tr><td>5</td><td>−J</td><td>Beginning deceleration</td></tr>
+        <tr><td>6</td><td>0</td><td>Constant max deceleration</td></tr>
+        <tr><td>7</td><td>+J</td><td>Easing out of deceleration</td></tr>
+      </table>
+
+      <h2>Methods</h2>
+      <table class="param-table">
+        <tr><th>Method</th><th>Returns</th><th>Description</th></tr>
+        <tr><td><code>setConstraints(jerk, accel, vel)</code></td><td>void</td><td>Set motion limits before generating.</td></tr>
+        <tr><td><code>generate(distance)</code></td><td>bool</td><td>Compute profile for given distance (can be negative).</td></tr>
+        <tr><td><code>calculate(time)</code></td><td>TrajectoryPoint</td><td>Get position, velocity, accel at <code>time</code> seconds.</td></tr>
+        <tr><td><code>getDuration()</code></td><td>double</td><td>Total profile duration in seconds.</td></tr>
+        <tr><td><code>isFinished(time)</code></td><td>bool</td><td>Check if <code>time >= getDuration()</code>.</td></tr>
+        <tr><td><code>reset()</code></td><td>void</td><td>Clear all profile state.</td></tr>
+      </table>
+
+      <h2>Built-in Presets</h2>
+      <div class="code-block">
+        <div class="code-header"><span class="lang">C++</span><button class="copy-btn" onclick="cp(this)">Copy</button></div>
+        <pre><span class="cm">// jerk=20, accel=8, vel=40 — precise/heavy robots</span>
+<span class="ty">MotionProfile</span> mp = <span class="ns">Helix</span>::<span class="ns">MotionProfiles</span>::<span class="fn">CONSERVATIVE</span>();
+
+<span class="cm">// jerk=40, accel=16, vel=60 — general use</span>
+<span class="ty">MotionProfile</span> mp = <span class="ns">Helix</span>::<span class="ns">MotionProfiles</span>::<span class="fn">BALANCED</span>();
+
+<span class="cm">// jerk=80, accel=32, vel=80 — light/fast robots</span>
+<span class="ty">MotionProfile</span> mp = <span class="ns">Helix</span>::<span class="ns">MotionProfiles</span>::<span class="fn">AGGRESSIVE</span>();</pre>
+      </div>
+
+      <div class="page-nav">
+        <button class="pn-btn" onclick="go('api-pidmotor')"><span class="pn-label">← Previous</span><span class="pn-title">PIDMotor API</span></button>
+        <button class="pn-btn right" onclick="go('tuning')"><span class="pn-label">Next →</span><span class="pn-title">PID Tuning Guide</span></button>
+      </div>
+    </div>
+
+    <!-- ── TUNING ── -->
+    <div class="section" id="sec-tuning">
+      <div class="page-title">PID Tuning Guide</div>
+      <div class="page-tags"><span class="tag tag-purple">Guide</span><span class="tag tag-blue">Essential</span></div>
+      <p class="page-lead">Every robot is different. These steps will get you dialed in quickly using a systematic approach.</p>
+
+      <h2>Tuning Order</h2>
+      <p>Always tune in this order. Never add kI or feedforward until the basic PID is working.</p>
+      <table>
+        <tr><th>#</th><th>Parameter</th><th>Goal</th><th>Signs you're done</th></tr>
+        <tr><td>1</td><td>kP</td><td>Get close to target</td><td>Robot reaches target but oscillates</td></tr>
+        <tr><td>2</td><td>kD</td><td>Stop oscillation</td><td>Robot settles cleanly, no wobble</td></tr>
+        <tr><td>3</td><td>kI</td><td>Fix steady-state error</td><td>Robot stops exactly on target (if needed)</td></tr>
+        <tr><td>4</td><td>Feedforward</td><td>Reduce PID workload</td><td>Profile tracks smoothly at all speeds</td></tr>
+      </table>
+
+      <h2>Step 1 — Tune kP</h2>
+      <div class="code-block">
+        <div class="code-header"><span class="lang">C++</span><button class="copy-btn" onclick="cp(this)">Copy</button></div>
+        <pre><span class="cm">// Start here. kI=0, kD=0</span>
+cfg.lateralPID = <span class="ty">PIDController</span>(<span class="nm">0.5</span>, <span class="nm">0</span>, <span class="nm">0</span>);</pre>
+      </div>
+      <p>Run <code>chassis.drive(24)</code> and observe. Increase kP in steps of 0.1–0.2 until the robot oscillates around the target. Then back off by ~20%.</p>
+
+      <h2>Step 2 — Tune kD</h2>
+      <div class="code-block">
+        <div class="code-header"><span class="lang">C++</span><button class="copy-btn" onclick="cp(this)">Copy</button></div>
+        <pre><span class="cm">// Add kD ≈ kP / 10 as starting point</span>
+cfg.lateralPID = <span class="ty">PIDController</span>(<span class="nm">1.0</span>, <span class="nm">0</span>, <span class="nm">0.1</span>);</pre>
+      </div>
+      <p>Increase kD until oscillation stops. If robot moves sluggishly, kD is too high.</p>
+
+      <h2>Step 3 — Tune kI (Only if needed)</h2>
+      <div class="code-block">
+        <div class="code-header"><span class="lang">C++</span><button class="copy-btn" onclick="cp(this)">Copy</button></div>
+        <pre><span class="cm">// Start very small — kI causes windup easily</span>
+cfg.lateralPID = <span class="ty">PIDController</span>(<span class="nm">1.0</span>, <span class="nm">0.001</span>, <span class="nm">0.1</span>);
+
+<span class="cm">// Set integral limit to prevent windup</span>
+chassis.getLateralPID().setIntegralLimit(<span class="nm">500</span>);</pre>
+      </div>
+
+      <div class="admon admon-warn">
+        <strong>⚠️ kI Warning</strong>
+        Most VEX robots don't need kI. Only add it if the robot consistently stops 1–2 inches short of the target even after tuning kP and kD.
+      </div>
+
+      <h2>Separate Lateral and Turn Tuning</h2>
+      <p>Tune <code>lateralPID</code> and <code>turnPID</code> separately. Run <code>drive()</code> tests for lateral, <code>turn()</code> tests for angular. Typical starting ranges:</p>
+      <table>
+        <tr><th>Controller</th><th>kP range</th><th>kD range</th></tr>
+        <tr><td>Lateral (drive)</td><td>0.4 – 1.5</td><td>0.05 – 0.2</td></tr>
+        <tr><td>Turn</td><td>1.0 – 3.0</td><td>0.1 – 0.4</td></tr>
+      </table>
+
+      <div class="admon admon-tip">
+        <strong>💡 Use the Logger</strong>
+        Start telemetry recording before each test run. Plot <code>target</code> vs <code>current</code> from the CSV to see exactly how the PID responds — overshoot, oscillation, and settle time are all immediately visible.
+      </div>
+
+      <div class="page-nav">
+        <button class="pn-btn" onclick="go('api-motion')"><span class="pn-label">← Previous</span><span class="pn-title">MotionProfile API</span></button>
+        <button class="pn-btn right" onclick="go('autonomous')"><span class="pn-label">Next →</span><span class="pn-title">Autonomous Examples</span></button>
+      </div>
+    </div>
+
+    <!-- ── AUTONOMOUS ── -->
+    <div class="section" id="sec-autonomous">
+      <div class="page-title">Autonomous Examples</div>
+      <div class="page-tags"><span class="tag tag-purple">Guide</span><span class="tag tag-blue">Examples</span></div>
+      <p class="page-lead">Copy-paste autonomous routines using Helix features.</p>
+
+      <h2>Simple L-Shape Route</h2>
+      <div class="code-block">
+        <div class="code-header"><span class="lang">C++</span><button class="copy-btn" onclick="cp(this)">Copy</button></div>
+        <pre><span class="kw">void</span> <span class="fn">autonomous</span>() {
+    odom->setPose(<span class="ty">Pose</span>(<span class="nm">0</span>, <span class="nm">0</span>, <span class="nm">90</span>));
+
+    chassis.drive(<span class="nm">24</span>);       <span class="cm">// Forward 24 inches</span>
+    <span class="ns">pros</span>::delay(<span class="nm">150</span>);
+    chassis.turn(<span class="nm">-90</span>);       <span class="cm">// Turn left 90°</span>
+    <span class="ns">pros</span>::delay(<span class="nm">150</span>);
+    chassis.drive(<span class="nm">24</span>);       <span class="cm">// Forward 24 more</span>
+}</pre>
+      </div>
+
+      <h2>Async + Parallel Actions</h2>
+      <div class="code-block">
+        <div class="code-header"><span class="lang">C++</span><button class="copy-btn" onclick="cp(this)">Copy</button></div>
+        <pre><span class="kw">void</span> <span class="fn">autonomous</span>() {
+    <span class="cm">// Start driving, don't block</span>
+    chassis.driveAsync(<span class="nm">36</span>, <span class="nm">80</span>, <span class="nm">4000</span>);
+
+    <span class="cm">// Do something else while driving</span>
+    arm.setPID(<span class="nm">90</span>);             <span class="cm">// Raise arm simultaneously</span>
+    <span class="ns">pros</span>::delay(<span class="nm">800</span>);
+
+    <span class="cm">// Wait for both to finish</span>
+    chassis.waitUntilSettled();
+    arm.waitUntilSettled();
+}</pre>
+      </div>
+
+      <h2>Point-to-Point Navigation</h2>
+      <div class="code-block">
+        <div class="code-header"><span class="lang">C++</span><button class="copy-btn" onclick="cp(this)">Copy</button></div>
+        <pre><span class="kw">void</span> <span class="fn">autonomous</span>() {
+    odom->setPose(<span class="ty">Pose</span>(<span class="nm">0</span>, <span class="nm">0</span>, <span class="nm">90</span>));
+
+    chassis.driveToPoint(<span class="nm">24</span>, <span class="nm">24</span>);    <span class="cm">// Go to (24", 24")</span>
+    chassis.turnToPoint(<span class="nm">48</span>, <span class="nm">0</span>);      <span class="cm">// Face (48", 0")</span>
+    chassis.driveToPoint(<span class="nm">48</span>, <span class="nm">0</span>);     <span class="cm">// Drive there</span>
+    chassis.driveToPoint(<span class="nm">0</span>, <span class="nm">0</span>, <span class="nm">60</span>);  <span class="cm">// Return at 60% speed</span>
+}</pre>
+      </div>
+
+      <h2>Full Auton with Logging</h2>
+      <div class="code-block">
+        <div class="code-header"><span class="lang">C++</span><button class="copy-btn" onclick="cp(this)">Copy</button></div>
+        <pre><span class="kw">void</span> <span class="fn">autonomous</span>() {
+    odom->setPose(<span class="ty">Pose</span>(<span class="nm">0</span>, <span class="nm">0</span>, <span class="nm">0</span>));
+    logger.startRecording();
+    logger.info(<span class="st">"Auton start"</span>);
+
+    chassis.drive(<span class="nm">24</span>);
+    chassis.turn(<span class="nm">90</span>);
+    chassis.drive(<span class="nm">24</span>);
+    chassis.turnTo(<span class="nm">0</span>);
+    chassis.drive(<span class="nm">-24</span>);
+
+    logger.stopRecording();
+    logger.info(<span class="st">"Auton complete"</span>);
+}</pre>
+      </div>
+
+      <div class="page-nav">
+        <button class="pn-btn" onclick="go('tuning')"><span class="pn-label">← Previous</span><span class="pn-title">PID Tuning Guide</span></button>
+        <div></div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<script>
+const sections = ['home','install','quickstart','motors','chassis','odom','logger','api-chassis','api-pid','api-odom','api-pidmotor','api-motion','tuning','autonomous'];
+const bcMap = {home:'Introduction',install:'Installation',quickstart:'Quick Start',motors:'Motors & Drivetrain',chassis:'Chassis Config',odom:'Odometry',logger:'Logger & Telemetry','api-chassis':'Chassis API','api-pid':'PIDController API','api-odom':'Odometry API','api-pidmotor':'PIDMotor API','api-motion':'MotionProfile API',tuning:'PID Tuning Guide',autonomous:'Autonomous Examples'};
+const configSections = ['motors','chassis','odom','logger'];
+let cur = 'home';
+
+function go(id) {
+  document.getElementById('sec-'+cur).classList.remove('active');
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+  cur = id;
+  document.getElementById('sec-'+id).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(el => {
+    if (el.getAttribute('onclick') === `go('${id}')`) el.classList.add('active');
+  });
+  document.getElementById('bc').textContent = bcMap[id] || id;
+  const idx = sections.indexOf(id);
+  const pct = idx < 0 ? 5 : Math.round(((idx+1)/sections.length)*100);
+  document.getElementById('pbar').style.width = pct+'%';
+  const cIdx = configSections.indexOf(id);
+  const sc = document.getElementById('sc');
+  sc.textContent = cIdx >= 0 ? `Config step ${cIdx+1} of 4` : '';
+  window.scrollTo(0,0);
+}
+
+function toggleTheme() {
+  const html = document.documentElement;
+  const dark = html.getAttribute('data-theme') === 'dark';
+  html.setAttribute('data-theme', dark ? 'light' : 'dark');
+  document.getElementById('thLabel').textContent = dark ? 'Dark' : 'Light';
+  document.getElementById('thIcon').innerHTML = dark
+    ? '<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>'
+    : '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>';
+}
+
+function cp(btn) {
+  const pre = btn.closest('.code-block').querySelector('pre');
+  navigator.clipboard.writeText(pre.innerText).then(() => {
+    btn.textContent = 'Copied!'; btn.classList.add('ok');
+    setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('ok'); }, 2000);
+  });
+}
+
+const searchMap = {
+  motor:'motors', drive:'motors', group:'motors', cartridge:'motors',
+  chassis:'chassis', config:'chassis', pid:'api-pid', controller:'api-pid',
+  kp:'tuning', kd:'tuning', tune:'tuning', gain:'tuning',
+  odom:'odom', position:'odom', pose:'odom', tracking:'odom', encoder:'odom',
+  log:'logger', telemetry:'logger', sd:'logger', csv:'logger', record:'logger',
+  async:'api-chassis', settle:'api-chassis', turn:'api-chassis', move:'api-chassis',
+  arm:'api-pidmotor', motor:'api-pidmotor', mechanism:'api-pidmotor',
+  motion:'api-motion', scurve:'api-motion', profile:'api-motion', jerk:'api-motion',
+  auton:'autonomous', autonomous:'autonomous', example:'autonomous',
+  install:'install', setup:'install', include:'install'
+};
+
+document.getElementById('searchInput').addEventListener('input', function() {
+  const q = this.value.toLowerCase().trim();
+  if (!q) return;
+  for (const [k,v] of Object.entries(searchMap)) {
+    if (q.includes(k)) { go(v); this.value=''; this.blur(); return; }
+  }
+});
+</script>
+</body>
+</html>
