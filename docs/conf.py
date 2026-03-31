@@ -6,9 +6,9 @@
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
-project = 'LemLib'
-copyright = '2024, Liam Teale'
-author = 'Liam Teale'
+project = 'Helix'
+copyright = '2026, Evan and Logan'
+author = 'Evan and Logan'
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
