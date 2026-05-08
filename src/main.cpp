@@ -3,9 +3,8 @@
 #include "helixApi.h"
 
 
-using namespace Helix;
-AutonSelector auton_selector;
 
+Helix::AutonSelector auton_selector;
 
 /**
  * Runs initialization code. This occurs as soon as the program is started.
@@ -16,9 +15,9 @@ AutonSelector auton_selector;
 void initialize() {
 	pros::lcd::initialize();
 	auton_selector.autons_add({
-        Auton("Red Left", moveStraight),
-        Auton("Red Right", turn90Degrees),
-        Auton("Blue Left", example3),
+        Helix::Auton("Red Left", moveStraight),
+        Helix::Auton("Red Right", turn90Degrees),
+        Helix::Auton("Blue Left", example3),
     });
     auton_selector.selected_auton_print(); // draw it
 
@@ -44,8 +43,6 @@ void initialize() {
             pros::delay(50);
         }
     });
-
-
 }
 
 /**
