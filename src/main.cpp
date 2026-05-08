@@ -1,20 +1,11 @@
 #include "main.h"
+#include "Helix/auton_selector.hpp"
+#include "helixApi.h"
 
-/**
- * A callback function for LLEMU's center button.
- *
- * When this callback is fired, it will toggle line 2 of the LCD text between
- * "I was pressed!" and nothing.
- */
-void on_center_button() {
-	static bool pressed = false;
-	pressed = !pressed;
-	if (pressed) {
-		pros::lcd::set_text(2, "I was pressed!");
-	} else {
-		pros::lcd::clear_line(2);
-	}
-}
+
+using namespace Helix;
+AutonSelector auton_selector;
+
 
 /**
  * Runs initialization code. This occurs as soon as the program is started.
@@ -24,9 +15,37 @@ void on_center_button() {
  */
 void initialize() {
 	pros::lcd::initialize();
-	pros::lcd::set_text(1, "Hello PROS User!");
+	auton_selector.autons_add({
+        Auton("Red Left", moveStraight),
+        Auton("Red Right", turn90Degrees),
+        Auton("Blue Left", example3),
+    });
+    auton_selector.selected_auton_print(); // draw it
 
-	pros::lcd::register_btn1_cb(on_center_button);
+    // Touch task to handle left/right paging
+    pros::Task touch_task([]() {
+        while (true) {
+            auto touch = pros::screen::touch_status();
+            if (touch.touch_status == pros::E_TOUCH_PRESSED) {
+                if (touch.x < 80) {
+                    if (auton_selector.auton_page_current > 0)
+                        auton_selector.auton_page_current--;
+                    else
+                        auton_selector.auton_page_current = auton_selector.auton_count - 1;
+                    auton_selector.selected_auton_print();
+                } else if (touch.x > 400) {
+                    if (auton_selector.auton_page_current < auton_selector.auton_count - 1)
+                        auton_selector.auton_page_current++;
+                    else
+                        auton_selector.auton_page_current = 0;
+                    auton_selector.selected_auton_print();
+                }
+            }
+            pros::delay(50);
+        }
+    });
+
+
 }
 
 /**
@@ -58,7 +77,9 @@ void competition_initialize() {}
  * will be stopped. Re-enabling the robot will restart the task, not re-start it
  * from where it left off.
  */
-void autonomous() {}
+void autonomous() {
+    auton_selector.selected_auton_call();
+}
 
 /**
  * Runs the operator control code. This function will be started in its own task
