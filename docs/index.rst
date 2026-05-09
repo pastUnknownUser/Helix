@@ -6,7 +6,7 @@ Welcome to Helix API
    :width: 420px
    :alt: Helix Field
 
-Helix is a robust, developer-first autonomous framework for VEX V5 robots running PROS 4. This documentation covers our built-in coordinate tracking, custom PID systems, and dynamic on-brain user interfaces.
+, developer-first autonomous framework for VEX V5 robots running PROS 4. This documentation covers our built-in coordinate tracking, custom PID systems, and dynamic on-brain user interfaces.
 
 .. toctree::
    :maxdepth: 2

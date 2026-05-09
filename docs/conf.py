@@ -19,7 +19,7 @@ html_theme = 'sphinx_rtd_theme'
 # Path for static assets (CSS, JS, Images)
 html_static_path = ['_static']
 
-# Inject custom stylesheet
+# Register your custom CSS file so Sphinx automatically links it in every HTML file
 html_css_files = [
     'css/custom.css',
 ]
