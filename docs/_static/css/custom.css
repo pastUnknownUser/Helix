@@ -1,36 +1,36 @@
-/* Custom CSS for Helix Frosted Glass Theme */
+/* --- Apple Glassmorphic RTD Theme Override --- */
 
-/* 1. Base Body with dynamic background representing a dark modern desktop */
+/* 1. Page Background and Typography */
 body {
-    background: radial-gradient(circle at top left, #1c1c2e 0%, #0d0d11 100%) !important;
+    background: radial-gradient(circle at top left, #14141e 0%, #08080c 100%) !important;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
-    color: #f5f5f7 !important;
+    color: #e2e2e9 !important;
 }
 
-/* 2. Glassmorphic Sidebar */
+/* 2. Frosted Glass Sidebar */
 .wy-nav-side {
-    background: rgba(20, 20, 25, 0.45) !important;
-    backdrop-filter: blur(20px) saturate(190%) !important;
-    -webkit-backdrop-filter: blur(20px) saturate(190%) !important;
+    background: rgba(18, 18, 24, 0.45) !important;
+    backdrop-filter: blur(25px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(25px) saturate(180%) !important;
     border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
-    box-shadow: 4px 0 32px 0 rgba(0, 0, 0, 0.3) !important;
+    box-shadow: 4px 0 24px 0 rgba(0, 0, 0, 0.3) !important;
 }
 
-/* Glassmorphic Search Area */
+/* Sidebar Search Area */
 .wy-side-nav-search {
     background-color: transparent !important;
     border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
 }
 
 .wy-side-nav-search input[type="text"] {
-    background: rgba(255, 255, 255, 0.06) !important;
+    background: rgba(255, 255, 255, 0.05) !important;
     border: 1px solid rgba(255, 255, 255, 0.1) !important;
     border-radius: 8px !important;
     color: #ffffff !important;
     backdrop-filter: blur(5px) !important;
 }
 
-/* 3. Navigation Links styling */
+/* Sidebar Text & Hover States */
 .wy-menu-vertical a {
     color: #a1a1a6 !important;
     transition: all 0.2s cubic-bezier(0.25, 1, 0.5, 1) !important;
@@ -47,46 +47,46 @@ body {
     border-left: 3px solid #0044bb !important;
 }
 
-/* 4. Glass Content Card */
+/* 3. The Central Frosted Glass Content Panel */
 .wy-nav-content-wrap {
     background: transparent !important;
 }
 
 .wy-nav-content {
-    background: rgba(25, 25, 30, 0.5) !important;
-    backdrop-filter: blur(25px) !important;
-    -webkit-backdrop-filter: blur(25px) !important;
-    max-width: 900px !important;
+    background: rgba(22, 22, 28, 0.55) !important;
+    backdrop-filter: blur(30px) !important;
+    -webkit-backdrop-filter: blur(30px) !important;
+    max-width: 880px !important;
     margin: 40px auto !important;
     border-radius: 16px !important;
-    border: 1px solid rgba(255, 255, 255, 0.06) !important;
-    box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.4) !important;
-    padding: 30px !important;
+    border: 1px solid rgba(255, 255, 255, 0.07) !important;
+    box-shadow: 0 16px 40px 0 rgba(0, 0, 0, 0.5) !important;
+    padding: 35px !important;
 }
 
-/* 5. Typography and Headers */
+/* 4. Text Headers */
 h1, h2, h3, h4 {
     color: #ffffff !important;
     font-weight: 600 !important;
 }
 
-/* Thin horizontal rules under headers */
+/* Horizontal separators */
 hr {
     border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
 }
 
-/* Codeblocks styled like glass consoles */
+/* 5. Custom Code Block Styling */
 .highlight {
-    background: rgba(10, 10, 12, 0.7) !important;
-    border: 1px solid rgba(255, 255, 255, 0.05) !important;
+    background: rgba(10, 10, 15, 0.75) !important;
+    border: 1px solid rgba(255, 255, 255, 0.06) !important;
     border-radius: 12px !important;
     backdrop-filter: blur(10px) !important;
-    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.05) !important;
+    box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.05) !important;
 }
 
 .rst-content code.literal {
     background: rgba(255, 255, 255, 0.08) !important;
-    color: #ff453a !important;
+    color: #ff453a !important; /* Premium system red for inline code */
     border: none !important;
     border-radius: 4px !important;
     padding: 2px 6px !important;
