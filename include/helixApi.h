@@ -8,5 +8,5 @@
 
 
 // Helix Folder includes
-#include "Helix/auton.hpp"
-#include "Helix/auton_selector.hpp"
+#include "Helix/auton.hpp" // IWYU pragma: keep
+#include "Helix/auton_selector.hpp" // IWYU pragma: keep
