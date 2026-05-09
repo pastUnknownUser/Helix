@@ -1,6 +1,6 @@
 #include "Helix/helixApi.h" // IWYU pragma: keep
 
-#include "PID.h"
+#include "Helix/PID.h"
 #include <cmath>
 
 namespace Helix {
