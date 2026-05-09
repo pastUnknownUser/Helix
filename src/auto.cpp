@@ -1,7 +1,7 @@
 #pragma once
-#include "main.h"
-#include "helixApi.h"
-#include "pros/misc.h"
+#include "main.h" // IWYU pragma: keep
+#include "Helix/helixApi.h" // IWYU pragma: keep
+#include "pros/misc.h" // IWYU pragma: keep
 
 // Autos for competition \\
 

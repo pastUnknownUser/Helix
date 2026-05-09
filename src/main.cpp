@@ -1,6 +1,6 @@
 #include "main.h"
-#include "external_config.hpp"
-#include "helixApi.h"
+#include "external_config.hpp" // IWYU pragma: keep
+#include "Helix/helixApi.h" // IWYU pragma: keep
 #include "pros/misc.h"
 
 Helix::AutonSelector auton_selector;

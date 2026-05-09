@@ -1,3 +1,3 @@
 #pragma once
-#include "main.h"
-#include "helixApi.h"
+#include "main.h" // IWYU pragma: keep
+#include "Helix/helixApi.h" // IWYU pragma: keep

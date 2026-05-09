@@ -1,7 +1,7 @@
 #pragma once
 #include <vector>
 #include "Helix/auton.hpp"
-#include "liblvgl/lvgl.h"
+#include "liblvgl/lvgl.h" // IWYU pragma: keep
 
 namespace Helix {
 

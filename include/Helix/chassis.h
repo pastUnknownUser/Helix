@@ -16,7 +16,7 @@ namespace Helix {
         public:
             Chassis(pros::MotorGroup& left, pros::MotorGroup& right, double wheel_diameter, double ratio);
             
-            void setDrivePID(double kP, double kI, double kD, double max_i, double max_out, double tolerence);
+            void setDrivePID(double kP, double kI, double kD, double max_i, double max_out, double tolerance);
 
             void move(double targetInches);
 

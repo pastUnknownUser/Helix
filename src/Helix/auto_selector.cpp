@@ -1,4 +1,4 @@
-#include "main.h"
+#include "main.h" // IWYU pragma: keep
 #include "Helix/auton_selector.hpp"
 
 using namespace Helix;

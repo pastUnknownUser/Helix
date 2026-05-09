@@ -1,4 +1,4 @@
-#include "helixApi.h"
+#include "Helix/helixApi.h" // IWYU pragma: keep
 
 #include "PID.h"
 #include <cmath>
