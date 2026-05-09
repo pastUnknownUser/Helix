@@ -1,6 +1,7 @@
 #include "main.h"
-#include "Helix/auton_selector.hpp"
+#include "external_config.hpp"
 #include "helixApi.h"
+#include "pros/misc.h"
 
 Helix::AutonSelector auton_selector;
 pros::Task* touch_task = nullptr;
@@ -13,7 +14,6 @@ void initialize() {
     Helix::Auton("Red Right", turn90Degrees, "Safe side, mobile goal + 2 rings",    true,  12),
     Helix::Auton("Blue Left", example3,      "AWP + stake climb",                   false, 15),
 });
-
     auton_selector.init_ui();
 }
 
@@ -29,7 +29,6 @@ void opcontrol() {
     pros::Controller master(pros::E_CONTROLLER_MASTER);
     pros::MotorGroup left_mg({1, -2, 3});
     pros::MotorGroup right_mg({-4, 5, -6});
-
     while (true) {
         int dir  = master.get_analog(ANALOG_LEFT_Y);
         int turn = master.get_analog(ANALOG_RIGHT_X);
@@ -37,4 +36,8 @@ void opcontrol() {
         right_mg.move(dir + turn);
         pros::delay(20);
     }
+    if (master.get_digital(pros::E_CONTROLLER_DIGITAL_R1)){
+        master.rumble("...");
+    };
+
 }

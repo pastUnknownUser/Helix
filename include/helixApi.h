@@ -5,7 +5,7 @@
 
 #include "auto.hpp"
 #include "helixSelector.hpp"
-
+#include "external_config.hpp"
 
 // Helix Folder includes
 #include "Helix/auton.hpp" // IWYU pragma: keep
