@@ -2,7 +2,7 @@
 project = 'Helix Robotics'
 copyright = '2026, Team Helix'
 author = 'Team Helix'
-release = '1.0.0'
+release = '0.0.1'
 
 # -- General configuration ---------------------------------------------------
 extensions = [
