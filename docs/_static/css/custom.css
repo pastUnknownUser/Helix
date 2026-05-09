@@ -1,18 +1,38 @@
-/* --- Apple Glassmorphic RTD Theme Override --- */
+/* ==========================================================================
+   HELIX DARK GLASSMORPHIC COMPLETE THEME OVERRIDE
+   Focus: Glass Containers, Frosted Search, Seamless Typography
+   ========================================================================== */
 
-/* 1. Page Background and Typography */
+/* --- 1. Root Variables & Global Reset --- */
+:root {
+    --glass-bg: rgba(18, 18, 22, 0.45);
+    --glass-content-bg: rgba(22, 22, 28, 0.55);
+    --glass-border: 1px solid rgba(255, 255, 255, 0.07);
+    --glass-blur: blur(25px) saturate(180%);
+    --glass-blur-heavy: blur(30px);
+    --glass-shadow: 0 16px 40px 0 rgba(0, 0, 0, 0.5);
+    
+    --text-primary: #e2e2e9;
+    --text-muted: #a1a1a6;
+    --accent-blue: #2f80ed;
+    --accent-blue-dim: rgba(0, 68, 187, 0.15);
+    --code-red: #ff453a;
+}
+
+/* Base Body with rich background radial gradient */
 body {
     background: radial-gradient(circle at top left, #14141e 0%, #08080c 100%) !important;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
-    color: #e2e2e9 !important;
+    color: var(--text-primary) !important;
+    overflow-x: hidden;
 }
 
-/* 2. Frosted Glass Sidebar */
+/* --- 2. Glassmorphic Sidebar (Menu) --- */
 .wy-nav-side {
-    background: rgba(18, 18, 24, 0.45) !important;
-    backdrop-filter: blur(25px) saturate(180%) !important;
-    -webkit-backdrop-filter: blur(25px) saturate(180%) !important;
-    border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
+    background: var(--glass-bg) !important;
+    backdrop-filter: var(--glass-blur) !important;
+    -webkit-backdrop-filter: var(--glass-blur) !important;
+    border-right: var(--glass-border) !important;
     box-shadow: 4px 0 24px 0 rgba(0, 0, 0, 0.3) !important;
 }
 
@@ -28,11 +48,17 @@ body {
     border-radius: 8px !important;
     color: #ffffff !important;
     backdrop-filter: blur(5px) !important;
+    transition: all 0.2s ease;
 }
 
-/* Sidebar Text & Hover States */
+.wy-side-nav-search input[type="text"]:focus {
+    background: rgba(255, 255, 255, 0.1) !important;
+    border-color: var(--accent-blue) !important;
+}
+
+/* Navigation Links styling */
 .wy-menu-vertical a {
-    color: #a1a1a6 !important;
+    color: var(--text-muted) !important;
     transition: all 0.2s cubic-bezier(0.25, 1, 0.5, 1) !important;
 }
 
@@ -41,53 +67,129 @@ body {
     color: #ffffff !important;
 }
 
+/* Current/Active Navigation State */
 .wy-menu-vertical li.current > a {
-    background: rgba(0, 68, 187, 0.15) !important;
-    color: #2f80ed !important;
+    background: var(--accent-blue-dim) !important;
+    color: var(--accent-blue) !important;
     border-left: 3px solid #0044bb !important;
 }
 
-/* 3. The Central Frosted Glass Content Panel */
+/* --- 3. The Central Glass Content Panel --- */
 .wy-nav-content-wrap {
     background: transparent !important;
 }
 
 .wy-nav-content {
-    background: rgba(22, 22, 28, 0.55) !important;
-    backdrop-filter: blur(30px) !important;
-    -webkit-backdrop-filter: blur(30px) !important;
-    max-width: 880px !important;
+    background: var(--glass-content-bg) !important;
+    backdrop-filter: var(--glass-blur-heavy) !important;
+    -webkit-backdrop-filter: var(--glass-blur-heavy) !important;
+    max-width: 900px !important; /* Increased width for new design */
     margin: 40px auto !important;
     border-radius: 16px !important;
-    border: 1px solid rgba(255, 255, 255, 0.07) !important;
-    box-shadow: 0 16px 40px 0 rgba(0, 0, 0, 0.5) !important;
+    border: var(--glass-border) !important;
+    box-shadow: var(--glass-shadow) !important;
     padding: 35px !important;
 }
 
-/* 4. Text Headers */
+/* Typography, Headers, and Seamless transitions */
 h1, h2, h3, h4 {
     color: #ffffff !important;
     font-weight: 600 !important;
+    margin-top: 1.5em !important;
 }
 
-/* Horizontal separators */
+p, li {
+    line-height: 1.7 !important;
+    margin-bottom: 1.2em !important;
+}
+
+/* Thin horizontal separators under headers */
 hr {
     border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+    margin: 2em 0 !important;
 }
 
-/* 5. Custom Code Block Styling */
+/* Admonitions (Warnings, Notes, Tips) styled like floating cards */
+.rst-content .admonition {
+    background: rgba(255, 255, 255, 0.03) !important;
+    border: 1px solid rgba(255, 255, 255, 0.06) !important;
+    border-radius: 12px !important;
+    backdrop-filter: blur(10px) !important;
+    color: var(--text-primary) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Note Admonition (Blue theme) */
+.rst-content .note {
+    border-left: 4px solid #1a73e8 !important;
+}
+.rst-content .note .admonition-title {
+    background-color: rgba(26, 115, 232, 0.1) !important;
+    color: #8ab4f8 !important;
+}
+
+/* Warning Admonition (Red theme) */
+.rst-content .warning {
+    border-left: 4px solid #ea4335 !important;
+}
+.rst-content .warning .admonition-title {
+    background-color: rgba(234, 67, 53, 0.1) !important;
+    color: #f28b82 !important;
+}
+
+/* --- 4. Code Blocks and Inline Code (Glass Console Style) --- */
 .highlight {
     background: rgba(10, 10, 15, 0.75) !important;
     border: 1px solid rgba(255, 255, 255, 0.06) !important;
     border-radius: 12px !important;
     backdrop-filter: blur(10px) !important;
     box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.05) !important;
+    padding: 1em !important;
 }
 
 .rst-content code.literal {
     background: rgba(255, 255, 255, 0.08) !important;
-    color: #ff453a !important; /* Premium system red for inline code */
+    color: var(--code-red) !important;
     border: none !important;
     border-radius: 4px !important;
     padding: 2px 6px !important;
+}
+
+/* --- 5. Fix for Non-seamless Search Results --- */
+/* The main container for search results */
+.wy-search-results {
+    background: transparent !important;
+}
+
+/* Style the individual search result items in the list */
+.wy-search-results li {
+    background: rgba(255, 255, 255, 0.02) !important;
+    border: 1px solid rgba(255, 255, 255, 0.05) !important;
+    border-radius: 12px !important;
+    margin-bottom: 1em !important;
+    padding: 15px !important;
+    backdrop-filter: blur(10px) !important;
+    transition: all 0.2s ease !important;
+}
+
+.wy-search-results li:hover {
+    background: rgba(255, 255, 255, 0.05) !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+    transform: translateY(-2px);
+}
+
+/* Search result typography */
+.wy-search-results li a {
+    color: #ffffff !important;
+    font-weight: 600 !important;
+}
+
+.wy-search-results li .context {
+    color: var(--text-muted) !important;
+    font-size: 0.9em !important;
+}
+
+/* The horizontal rule separating search results */
+.wy-search-results hr {
+    display: none; /* Hide standard separators; list items are cards now */
 }
