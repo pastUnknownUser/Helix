@@ -1,10 +1,17 @@
-Welcome to Helix!
-==========================
+Welcome to Helix API
+===================
 
-This is the technical documentation hub for Team Helix's VEX V5 robot. Here you will find our hardware layouts, control algorithms, and autonomous configurations.
+.. image:: https://raw.githubusercontent.com/your-username/helix/main/docs/assets/field_render.png
+   :align: center
+   :width: 420px
+   :alt: Helix Field
+
+Helix is a robust, developer-first autonomous framework for VEX V5 robots running PROS 4. This documentation covers our built-in coordinate tracking, custom PID systems, and dynamic on-brain user interfaces.
 
 .. toctree::
    :maxdepth: 2
-   :caption: Guides:
+   :caption: API Architecture:
 
-   self
+   chassis_api
+   pid_api
+   selectors_api

@@ -1,24 +1,32 @@
 # -- Project information -----------------------------------------------------
-project = 'Helix'
-copyright = '2026, Helix'
-author = 'Evan and Logan'
-release = '0.0.1'
+project = 'Helix Robotics'
+copyright = '2026, Team Helix'
+author = 'Team Helix'
+release = '1.0.0'
 
 # -- General configuration ---------------------------------------------------
 extensions = [
-    'sphinx.ext.autodoc',      # Allows automatic code doc generation
-    'sphinx.ext.githubpages',  # Helper for hosting on GitHub pages if desired
+    'sphinx.ext.autodoc',
+    'sphinx.ext.githubpages',
 ]
 
 templates_path = ['_templates']
 exclude_patterns = []
 
 # -- Options for HTML output -------------------------------------------------
-html_theme = 'sphinx_rtd_theme'  # The iconic LemLib style theme
+html_theme = 'sphinx_rtd_theme'
 
-# Theme styling tweaks
+# Path for static assets (CSS, JS, Images)
+html_static_path = ['_static']
+
+# Inject custom stylesheet
+html_css_files = [
+    'css/custom.css',
+]
+
+# Theme options
 html_theme_options = {
-    'style_nav_header_background': '#1A1A1A',  # Dark header background
+    'style_nav_header_background': 'transparent', # Make sidebar header transparent
     'collapse_navigation': False,
     'sticky_navigation': True,
 }
