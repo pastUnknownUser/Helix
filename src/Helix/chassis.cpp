@@ -1,14 +1,21 @@
 #include "Helix/helixApi.h" // IWYU pragma: keep
 #include "pros/motor_group.hpp"
 #include <cmath>
+#include "main.h" // IWYU pragma: keep
 
 namespace Helix {
-    Chassis::Chassis(pros::MotorGroup& left, pros::MotorGroup& right, double wheel_dia, double ratio) : leftSide(left), rightSide(right), wheelDiameter(wheel_dia), gearRatio(ratio) , drivePID(0, 0, 0) {}
+    Chassis::Chassis(pros::MotorGroup& left, pros::MotorGroup& right, pros::Imu& imu, double wheel_diameter, double ratio) : leftSide(left), rightSide(right), imu(imu), wheelDiameter(wheel_diameter), gearRatio(ratio) , drivePID(0, 0, 0), turnPID(0,0,0) {}
 
     void Chassis::setDrivePID(double p, double i, double d, double max_i, double max_out, double tol) {
         drivePID = PID(p, i, d);
         drivePID.setLimits(max_i, max_out);
         drivePID.setTolerance(tol);
+    }
+
+    void Chassis::setTurnPID(double p, double i, double d, double max_i, double max_out, double tol) {
+        turnPID = PID(p, i, d);
+        turnPID.setLimits(max_i, max_out);
+        turnPID.setTolerance(tol);
     }
 
     void Chassis::move(double targetInches) {
@@ -28,6 +35,25 @@ namespace Helix {
             double power = drivePID.compute(targetDegrees, currentDegrees);
 
             leftSide.move(power);
+            rightSide.move(power);
+
+            pros::delay(10);
+        }
+
+        leftSide.brake();
+        rightSide.brake();
+    }
+
+    void Chassis::turn(double targetDegrees) {
+        imu.reset(); // Reset IMU heading to 0
+
+        turnPID.reset();
+
+        while (!turnPID.isSettled()) {
+            double currentHeading = imu.get_heading();
+            double power = turnPID.compute(targetDegrees, currentHeading);
+
+            leftSide.move(-power);
             rightSide.move(power);
 
             pros::delay(10);

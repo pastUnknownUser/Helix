@@ -4,20 +4,37 @@
 #include "Helix/helixApi.h" // IWYU pragma: keep
 #include "pros/misc.h" // IWYU pragma: keep
 #include "pros/motor_group.hpp"
-#include "pros/motors.hpp"
+#include "pros/motors.hpp" //IWYU pragma: keep
 
 // Autos for competition \\
 
-pros::MotorGroup leftSide({1, -2, 3});
-pros::MotorGroup rightSide({-4, 5, -6});
-
-Helix::Chassis chassis(leftSide, rightSide, "wheel diameter", "gear ratio");
+inline pros::MotorGroup left_motors({-8, -19, -20}, pros::MotorGearset::blue); // left motors on ports 3, -13, -11
+inline pros::MotorGroup right_motors({18, 4 ,1}, pros::MotorGearset::blue); // right motors on ports -7, 18, 19
+inline pros::Imu imu(14); // imu on port 14
+Helix::Chassis chassis(
+    left_motors, 
+    right_motors, 
+    imu, 
+    3.25, 
+    1.33333);
 
 void moveStraight(){
-    chassis.setDrivePID(.1, .001, .3, 1000, 10, 5);
-    chassis.move(24);
-    //chassis.dosomethingidfk
-    //master.rumble("...");
+    chassis.setDrivePID(
+        10, 
+        .001, 
+        5, 
+        1200, 
+        10, 
+        5);
+        chassis.setTurnPID(
+        10, 
+        .001, 
+        5, 
+        1200, 
+        10, 
+        5);
+    chassis.move(10);
+    chassis.turn(90);
 }
 
 void turn90Degrees(){
