@@ -15,7 +15,7 @@ namespace Helix {
         double maxOutput;
         double tolerance;
 
-        // Memory
+        // Runtime state
         double error, prevError;
         double integral, derivative;
 
@@ -31,7 +31,7 @@ namespace Helix {
         /**
          * @brief Sets the limits for the integral windup and max motor output.
          * @param max_i The maximum absolute value the integral can accumulate.
-         * @param max_out The maximum output (e.g., 12.0 for V5 Volts).
+         * @param max_out The maximum output in millivolts for move_voltage().
          */
         void setLimits(double max_i, double max_out);
 
@@ -45,7 +45,7 @@ namespace Helix {
          * @brief Computes the necessary output based on the current state.
          * @param target The desired target value.
          * @param current The current sensor reading.
-         * @return The calculated output (e.g., voltage to send to the motor).
+         * @return The calculated motor voltage in millivolts.
          */
         double compute(double target, double current);
 

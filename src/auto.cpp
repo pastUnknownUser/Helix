@@ -1,50 +1,48 @@
-#pragma once
 #include "Helix/chassis.h"
 #include "main.h" // IWYU pragma: keep
-#include "Helix/helixApi.h" // IWYU pragma: keep
-#include "pros/misc.h" // IWYU pragma: keep
-#include "pros/motor_group.hpp"
-#include "pros/motors.hpp" //IWYU pragma: keep
+#include "auto.hpp"
 
-// Autos for competition \\
+extern Helix::Chassis chassis;
 
-inline pros::MotorGroup left_motors({-8, -19, -20}, pros::MotorGearset::blue); // left motors on ports 3, -13, -11
-inline pros::MotorGroup right_motors({18, 4 ,1}, pros::MotorGearset::blue); // right motors on ports -7, 18, 19
-inline pros::Imu imu(14); // imu on port 14
-Helix::Chassis chassis(
-    left_motors, 
-    right_motors, 
-    imu, 
-    3.25, 
-    1.33333);
+namespace {
+    // Hardware values from the incoming robot configuration.
+    constexpr double kWheelDiameterIn = 3.25;
+    constexpr double kExternalGearRatio = 1.33333;
 
-void moveStraight(){
-    chassis.setDrivePID(
-        10, 
-        .001, 
-        5, 
-        1200, 
-        10, 
-        5);
-        chassis.setTurnPID(
-        10, 
-        .001, 
-        5, 
-        1200, 
-        10, 
-        5);
+    void configureTestDrive() {
+        // Outputs are millivolts. These are conservative starting gains for
+        // an initial drivetrain test, not a final competition tune.
+        chassis.setDrivePID(10.0, 0.0, 20.0, 0.0, 9000.0, 5.0);
+        chassis.setTurnPID(75.0, 0.0, 20.0, 0.0, 9000.0, 1.0);
+    }
+}
+
+pros::MotorGroup leftSide({-8, -19, -20}, pros::MotorGearset::blue);
+pros::MotorGroup rightSide({18, 4, 1}, pros::MotorGearset::blue);
+pros::Imu imu(14);
+Helix::Chassis chassis(leftSide, rightSide, imu, kWheelDiameterIn, kExternalGearRatio);
+
+void initializeChassis() {
+    imu.reset(true);
+}
+
+void moveStraight() {
+    configureTestDrive();
     chassis.move(10);
+}
+
+void turn90Degrees() {
+    configureTestDrive();
     chassis.turn(90);
 }
 
-void turn90Degrees(){
-    //chassis.turnsomethingidfk
+void blueLeft() {
+    configureTestDrive();
+    chassis.move(10);
 }
 
-void example3(){
-    //Do something here
-}
-
-void example4(){
-    //Do something here
+void skills() {
+    configureTestDrive();
+    chassis.move(10);
+    chassis.turn(90);
 }

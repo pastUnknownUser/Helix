@@ -15,9 +15,6 @@ public:
     SelectorView current_view;
 
     lv_obj_t* screen;
-    lv_obj_t* list_panel;
-    lv_obj_t* detail_panel;
-
     AutonSelector();
     AutonSelector(std::vector<Auton> autons);
     void selected_auton_call();

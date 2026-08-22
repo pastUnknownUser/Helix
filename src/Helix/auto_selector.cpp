@@ -1,5 +1,8 @@
 #include "main.h" // IWYU pragma: keep
 #include "Helix/auton_selector.hpp"
+#include <algorithm>
+#include <cstdint>
+#include <cstdio>
 
 using namespace Helix;
 
@@ -27,7 +30,7 @@ static lv_obj_t* make_rect(lv_obj_t* parent, int x, int y, int w, int h, lv_colo
     lv_obj_set_style_border_width(obj, 0, 0);
     lv_obj_set_style_pad_all(obj, 0, 0);
     lv_obj_set_style_radius(obj, 0, 0);
-    lv_obj_has_flag(obj, LV_OBJ_FLAG_SCROLLABLE); // ← add this
+    lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE);
     return obj;
 }
 
@@ -103,8 +106,6 @@ AutonSelector::AutonSelector() {
     auton_page_current = 0;
     current_view = SelectorView::LIST;
     screen = nullptr;
-    list_panel = nullptr;
-    detail_panel = nullptr;
     Autons = {};
 }
 
@@ -113,19 +114,19 @@ AutonSelector::AutonSelector(std::vector<Auton> autons) {
     auton_page_current = 0;
     current_view = SelectorView::LIST;
     screen = nullptr;
-    list_panel = nullptr;
-    detail_panel = nullptr;
     Autons.assign(autons.begin(), autons.end());
 }
 
 void AutonSelector::autons_add(std::vector<Auton> autons) {
-    auton_count += autons.size();
+    Autons.insert(Autons.end(), autons.begin(), autons.end());
+    auton_count = static_cast<int>(Autons.size());
     auton_page_current = 0;
-    Autons.assign(autons.begin(), autons.end());
 }
 
 void AutonSelector::selected_auton_call() {
     if (auton_count == 0) return;
+    auton_page_current = std::clamp(auton_page_current, 0, auton_count - 1);
+    if (!Autons[auton_page_current].auton_call) return;
     Autons[auton_page_current].auton_call();
 }
 
@@ -140,8 +141,15 @@ void AutonSelector::init_ui() {
 
 // ── LIST VIEW ─────────────────────────────────────────────────────────────────
 void AutonSelector::show_list() {
-    if (auton_count == 0) return;
     current_view = SelectorView::LIST;
+
+    if (auton_count == 0) {
+        if (screen == nullptr) return;
+        lv_obj_clean(screen);
+        make_label(screen, 24, 96, "NO AUTONOMOUS ROUTINES", C_WHITE, true);
+        make_label(screen, 24, 122, "Add a routine before initializing the selector.", C_GREY);
+        return;
+    }
 
     // Clear screen
     lv_obj_delete(screen);
@@ -169,6 +177,28 @@ void AutonSelector::show_list() {
     char pg[16];
     snprintf(pg, sizeof(pg), "%d / %d", auton_page_current + 1, auton_count);
     make_label(badge, 6, 3, pg, C_WHITE);
+
+    // Navigation controls keep routines beyond the first four reachable.
+    lv_obj_t* previous = make_rect(header, 174, 5, 20, 20, C_CARD);
+    make_label(previous, 6, 2, "<", C_LGREY, true);
+    lv_obj_add_flag(previous, LV_OBJ_FLAG_CLICKABLE);
+    lv_obj_add_event_cb(previous, [](lv_event_t* e) {
+        if (lv_event_get_code(e) != LV_EVENT_CLICKED) return;
+        AutonSelector* selector = static_cast<AutonSelector*>(lv_event_get_user_data(e));
+        selector->auton_page_current = std::max(0, selector->auton_page_current - 1);
+        selector->show_list();
+    }, LV_EVENT_CLICKED, this);
+
+    lv_obj_t* next = make_rect(header, 198, 5, 20, 20, C_CARD);
+    make_label(next, 6, 2, ">", C_LGREY, true);
+    lv_obj_add_flag(next, LV_OBJ_FLAG_CLICKABLE);
+    lv_obj_add_event_cb(next, [](lv_event_t* e) {
+        if (lv_event_get_code(e) != LV_EVENT_CLICKED) return;
+        AutonSelector* selector = static_cast<AutonSelector*>(lv_event_get_user_data(e));
+        selector->auton_page_current = std::min(selector->auton_count - 1,
+                                                 selector->auton_page_current + 1);
+        selector->show_list();
+    }, LV_EVENT_CLICKED, this);
 
     // Accent line
     make_rect(right, 0, 30, 278, 2, C_ACCENT);
@@ -230,7 +260,7 @@ void AutonSelector::show_list() {
 
 // ── DETAIL VIEW ───────────────────────────────────────────────────────────────
 void AutonSelector::show_detail(int index) {
-    if (auton_count == 0) return;
+    if (auton_count == 0 || index < 0 || index >= auton_count) return;
     current_view = SelectorView::DETAIL;
     Auton& a = Autons[index];
 

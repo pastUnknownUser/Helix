@@ -4,8 +4,6 @@
 #pragma once
 
 #include "auto.hpp"
-#include "helixSelector.hpp" // IWYU pragma: keep
-#include "external_config.hpp" // IWYU pragma: keep
 
 // Helix Folder includes
 #include "Helix/auton.hpp" // IWYU pragma: keep

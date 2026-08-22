@@ -1,3 +1,4 @@
 #pragma once
-#include "main.h" // IWYU pragma: keep
-#include "Helix/helixApi.h" // IWYU pragma: keep
+
+// Shared project configuration can live here. Keep this header dependency-free
+// so it is safe to include from both PROS entry points and Helix headers.

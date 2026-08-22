@@ -1,4 +1,12 @@
+#pragma once
+
+#include "pros/motor_group.hpp"
+
+extern pros::MotorGroup leftSide;
+extern pros::MotorGroup rightSide;
+
 void moveStraight();
 void turn90Degrees();
-void example3();
-void example4();
+void blueLeft();
+void skills();
+void initializeChassis();

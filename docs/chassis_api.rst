@@ -10,8 +10,8 @@ Source implementation inside ``chassis.cpp``:
     #include "Helix/helixApi.h"
     #include "pros/motor_group.hpp"
 
-    // Constructing a custom Chassis instance
-    Helix::Chassis chassis(leftSide, rightSide, "wheel diameter", "gear ratio");
+    pros::Imu imu(14);
+    Helix::Chassis chassis(leftSide, rightSide, imu, 3.25, 1.33333);
 
 Method Overview
 ---------------
@@ -23,3 +23,7 @@ Method Overview
 .. cpp:function:: void Chassis::move(double targetInches)
 
    Executes a straight-line movement using encoder calculations. Automatically resets position and tracks output until target is settled.
+
+.. cpp:function:: void Chassis::turn(double targetDegrees)
+
+   Uses the inertial sensor to turn to a requested heading with a bounded PID loop.

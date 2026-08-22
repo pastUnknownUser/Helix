@@ -1,7 +1,7 @@
 Interactive Auton Selector
 ===========================
 
-Our user interface utilizes **LVGL v8** to present a visual representation of the game field alongside details on autonomous choices.
+Our user interface utilizes **LVGL v9** to present a visual representation of the game field alongside details on autonomous choices.
 
 Features
 --------

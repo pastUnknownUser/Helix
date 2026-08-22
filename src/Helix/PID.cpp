@@ -6,7 +6,7 @@
 namespace Helix {
 
     PID::PID(double p, double i, double d) 
-        : kP(p), kI(i), kD(d), maxIntegral(0), maxOutput(12.0), tolerance(1.0),
+        : kP(p), kI(i), kD(d), maxIntegral(0), maxOutput(12000.0), tolerance(1.0),
           error(0), prevError(0), integral(0), derivative(0) {}
 
     void PID::setLimits(double max_i, double max_out) {
@@ -29,6 +29,7 @@ namespace Helix {
             else if (integral < -maxIntegral) integral = -maxIntegral;
         }
         
+        // Clear accumulated error when the controller crosses the target.
         if ((error > 0 && prevError < 0) || (error < 0 && prevError > 0) || error == 0) {
             integral = 0;
         }

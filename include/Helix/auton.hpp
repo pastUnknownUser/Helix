@@ -1,6 +1,6 @@
 #pragma once
 #include <functional>
-#include <iostream> // IWYU pragma: keep
+#include <string>
 #include <vector> // IWYU pragma: keep
 
 namespace Helix {
@@ -16,7 +16,7 @@ public:
     std::string Name;
     std::string Description;
     bool IsRed;
-    int ExpectedPoints;          // ← add this
+    int ExpectedPoints;
     std::function<void()> auton_call;
 };
 }
